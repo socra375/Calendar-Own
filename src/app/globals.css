@@ -2,40 +2,446 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ───────────── Tokens: "HUD sobrio" ─────────────
+   Light = :root · Dark = :root.dark (por defecto, ver ThemeProvider) */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --card: #f8fafc;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
+  color-scheme: light;
+  --bg: #f6f6f3;
+  --surface: #ffffff;
+  --surface-2: #efefeb;
+  --line: #e1e1db;
+  --line-strong: #cfcfc7;
+  --fg: #141717;
+  --muted: #5e6866;
+  --accent: #0f9488;
+  --accent-ink: #ffffff;
+  --warm: #b7791f;
+  --danger: #c93c3c;
+  --success: #1f8f5b;
+  --shadow: 0 8px 30px -14px color-mix(in oklab, var(--accent) 22%, transparent);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.dark {
-  --background: #0b1120;
-  --foreground: #e2e8f0;
-  --muted: #94a3b8;
-  --border: #1e293b;
-  --card: #111827;
-  --primary: #3b82f6;
-  --primary-foreground: #0b1120;
+:root.dark {
+  color-scheme: dark;
+  --bg: #0b0d0e;
+  --surface: #121516;
+  --surface-2: #181c1d;
+  --line: #252a2c;
+  --line-strong: #343b3e;
+  --fg: #e8ecec;
+  --muted: #8a9496;
+  --accent: #2dd4bf;
+  --accent-ink: #042f2a;
+  --warm: #f5b84b;
+  --danger: #f26d6d;
+  --success: #6ee7a8;
+  --shadow: 0 8px 30px -12px color-mix(in oklab, var(--accent) 25%, transparent);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
   --color-muted: var(--muted);
-  --color-border: var(--border);
-  --color-card: var(--card);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-warm: var(--warm);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 20px;
+  --shadow-hud: var(--shadow);
 }
 
+html {
+  background: var(--bg);
+}
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tipografía fluida */
+.t-h1 {
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.t-h2 {
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* Foco visible global */
+:where(a, button, input, select, textarea, summary, [tabindex], [role="button"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+:where(input, select, textarea):focus-visible {
+  outline-offset: 0;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 35%, transparent);
+}
+
+/* Scrollbars discretas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* Marcas de retícula en esquinas (paneles destacados) */
+.reticle {
+  position: relative;
+}
+.reticle::before,
+.reticle::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: color-mix(in oklab, var(--accent) 70%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+.reticle::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.reticle::after {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+/* Brillo de borde en hover */
+.glow-hover {
+  transition: border-color 0.18s var(--ease), box-shadow 0.18s var(--ease), background-color 0.18s var(--ease);
+}
+.glow-hover:hover {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+/* Skeleton */
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, color-mix(in oklab, var(--surface-2) 70%, var(--line-strong)) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 8px;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+/* Diálogos nativos */
+dialog.ui-dialog {
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+  max-height: min(92dvh, 900px);
+  overflow: hidden;
+  animation: dialog-in 0.2s var(--ease);
+}
+dialog.ui-dialog::backdrop {
+  background: color-mix(in oklab, #000 55%, transparent);
+  backdrop-filter: blur(3px);
+  animation: fade-in 0.2s var(--ease);
+}
+dialog.ui-sheet {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(640px, 100vw);
+  max-width: 100vw;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  animation: sheet-in 0.22s var(--ease);
+}
+@media (max-width: 767px) {
+  dialog.ui-sheet {
+    width: 100vw;
+    border-width: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+[popover].toast-region {
+  position: fixed;
+  inset: auto 16px 88px auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  overflow: visible;
+  width: min(380px, calc(100vw - 32px));
+}
+@media (min-width: 768px) {
+  [popover].toast-region {
+    inset: auto 24px 24px auto;
+  }
+}
+
+/* Inputs nativos de fecha/hora con estilo */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  min-height: 2.5rem;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  filter: var(--picker-filter, none);
+}
+:root.dark input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+input[type="color"] {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* ───────────── FullCalendar ───────────── */
+.fc {
+  --fc-border-color: var(--line);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--surface-2);
+  --fc-neutral-text-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklab, var(--accent) 7%, transparent);
+  --fc-now-indicator-color: var(--accent);
+  --fc-event-border-color: transparent;
+  --fc-list-event-hover-bg-color: var(--surface-2);
+  --fc-highlight-color: color-mix(in oklab, var(--accent) 16%, transparent);
+  --fc-non-business-color: transparent;
+  --fc-more-link-bg-color: var(--surface-2);
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+}
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid td,
+.fc .fc-scrollgrid th {
+  border-color: var(--line);
+}
+.fc .fc-col-header-cell-cushion,
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-timegrid-axis-cushion {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 4px;
+}
+.fc .fc-day-today .fc-col-header-cell-cushion {
+  color: var(--accent);
+}
+.fc .fc-daygrid-day-number {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 8px;
+}
+.fc .fc-day-today .fc-daygrid-day-number {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+  margin: 4px;
+  padding: 2px 7px;
+}
+.fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 0.45;
+}
+.fc-theme-standard .fc-popover {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.fc .fc-popover-header {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.fc .fc-event {
+  border-radius: 6px;
+  cursor: pointer;
+  border-width: 0;
+  box-shadow: none;
+  transition: filter 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.fc .fc-event:hover {
+  filter: brightness(1.1);
+}
+.fc .fc-event:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.fc .fc-event-main {
+  padding: 1px 4px;
+}
+.fc .ev-tentative {
+  opacity: 0.78;
+  outline: 1px dashed currentColor;
+  outline-offset: -2px;
+}
+.fc .ev-cancelled {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.fc .fc-timegrid-now-indicator-line {
+  border-width: 1px 0 0;
+  box-shadow: 0 0 6px var(--accent);
+}
+.fc .fc-timegrid-now-indicator-arrow {
+  border: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+.fc .fc-list {
+  border-color: var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.fc .fc-list-day-cushion {
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.fc .fc-list-day-cushion a {
+  color: var(--fg);
+  text-decoration: none;
+}
+.fc .fc-list-event td {
+  border-color: var(--line);
+}
+.fc .fc-list-event-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.fc .fc-list-empty {
+  background: transparent;
+  color: var(--muted);
+}
+.fc .fc-more-link {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+.fc .fc-highlight {
+  background: var(--fc-highlight-color);
+}
+.fc .fc-timegrid-slot {
+  height: 2.75em;
+}
+.fc-direction-ltr .fc-timegrid-slot-label-frame {
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Eventos sin color propio: usan el acento del tema */
+.fc .ev-default {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.fc .ev-default .fc-event-main,
+.fc .ev-default .fc-event-title,
+.fc .ev-default .fc-event-time {
+  color: var(--accent-ink);
+}
+.fc .fc-list-event.ev-default {
+  background: transparent;
+}
+.fc .fc-list-event.ev-default .fc-list-event-title a,
+.fc .fc-list-event-title {
+  color: var(--fg);
 }

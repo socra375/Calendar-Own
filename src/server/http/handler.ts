@@ -130,7 +130,10 @@ export function apiHandler<
         if (options.rateLimit !== false) {
           const cfg = options.rateLimit ?? (actor ? DEFAULT_LIMIT : null);
           if (cfg) {
-            const key = actor ? `api:${actor.tokenId ?? actor.userId}` : `pub:${ip}:${new URL(req.url).pathname}`;
+            const who = actor ? `api:${actor.tokenId ?? actor.userId}` : `pub:${ip}`;
+            // Un límite propio de la ruta (p. ej. /notifications/test) lleva su contador aparte: si compartiera el del
+            // límite general, el tráfico normal de la UI lo agotaría y devolvería RATE_LIMITED casi siempre.
+            const key = options.rateLimit || !actor ? `${who}:${new URL(req.url).pathname}` : who;
             await enforceRateLimit(db, { key, ...cfg });
           }
         }
