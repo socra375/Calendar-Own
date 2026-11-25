@@ -77,6 +77,16 @@ export function CalendarView() {
     cal.current?.getApi().refetchEvents();
   }, [categoryId, q, version, tz]);
 
+  // Al entrar en una vista horaria (el alto se fija tras montarla), desplaza hasta la hora actual.
+  useEffect(() => {
+    if (!view.startsWith("timeGrid")) return;
+    const t = window.setTimeout(() => {
+      const h = Math.max(wall(nowMs(), filters.current.tz).h - 1, 0);
+      cal.current?.getApi().scrollToTime(`${String(h).padStart(2, "0")}:00:00`);
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [view]);
+
   const fetchEvents = useCallback(async (info: EventSourceFuncArg, ok: (e: EventInput[]) => void, fail: (e: Error) => void) => {
     const { categoryId: cat, q: text, tz: zone } = filters.current;
     try {
@@ -291,7 +301,7 @@ export function CalendarView() {
             eventAllow={(drop, ev) => drop.allDay === ev?.allDay}
             eventDisplay="block"
             dayMaxEvents={4}
-            height="auto"
+            height={view.startsWith("timeGrid") ? "max(480px, calc(100dvh - 330px))" : "auto"}
             scrollTime={`${String(startHour).padStart(2, "0")}:00:00`}
             slotDuration="00:30:00"
             snapDuration="00:15:00"
@@ -319,6 +329,7 @@ export function CalendarView() {
         title="Mover evento recurrente"
         description="¿A qué ocurrencias aplicar el cambio?"
         confirmLabel="Aplicar"
+        allHint="Al mover la serie entera se descartan las ocurrencias ya editadas."
         loading={saving}
         onConfirm={(s) => moving && void apply(moving, s, false)}
         onClose={() => {

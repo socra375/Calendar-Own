@@ -91,7 +91,7 @@ function Categories() {
               <span className="grid size-11 shrink-0 place-items-center rounded-card" style={{ background: c.color, color: readableOn(c.color) }}>
                 <DynIcon name={c.icon} className="size-5" fallback="tag" />
               </span>
-              <button type="button" onClick={() => setEdit({ c })} className="min-w-0 flex-1 text-left">
+              <button type="button" onClick={() => setEdit({ c })} className="min-h-11 min-w-0 flex-1 text-left">
                 <span className="block truncate text-sm font-medium hover:text-accent">{c.name}</span>
                 <span className="block truncate text-xs text-muted">{c.description || "Sin descripción"}</span>
               </button>
@@ -204,7 +204,7 @@ function Tags() {
             {(q.data ?? []).map((t) => (
               <li key={t.id} className="flex items-center gap-3 px-2 py-3">
                 <span aria-hidden className="size-3 shrink-0 rounded-full border border-black/10" style={{ background: t.color ?? "var(--line-strong)" }} />
-                <button type="button" onClick={() => setEdit({ t })} className="min-w-0 flex-1 truncate text-left text-sm font-medium hover:text-accent">#{t.name}</button>
+                <button type="button" onClick={() => setEdit({ t })} className="min-h-11 min-w-0 flex-1 truncate text-left text-sm font-medium hover:text-accent">#{t.name}</button>
                 <span className="font-mono text-[11px] text-muted">{t.usage?.events ?? 0} eventos · {t.usage?.tasks ?? 0} tareas</span>
                 <Menu
                   label={`Acciones de ${t.name}`}

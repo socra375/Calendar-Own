@@ -20,6 +20,8 @@ async function cleanup() {
   for (const t of tasks.data ?? []) await api("DELETE", `/tasks/${t.id}`);
   const cats = await api("GET", `/categories?q=E2E&pageSize=100`);
   for (const c of cats.data ?? []) await api("DELETE", `/categories/${c.id}`);
+  const sds = await api("GET", `/special-dates?q=E2E&pageSize=100`);
+  for (const d of sds.data ?? []) await api("DELETE", `/special-dates/${d.id}`);
   const toks = await api("GET", `/tokens`);
   for (const t of toks.data ?? []) if (t.name.startsWith("E2E") && !t.revokedAt) await api("DELETE", `/tokens/${t.id}`);
   void ev;
@@ -177,6 +179,61 @@ try {
   await sel.waitFor({ timeout: 6000 });
   check("seleccionar un rango abre «Nuevo evento» con la hora precargada", (await sel.getByLabel("Hora de inicio").inputValue()) === "10:00" && ["11:00", "11:15"].includes(await sel.getByLabel("Hora de fin").inputValue()), `${await sel.getByLabel("Hora de inicio").inputValue()}-${await sel.getByLabel("Hora de fin").inputValue()}`);
   await sel.getByRole("button", { name: "Cancelar" }).click();
+
+  // ── 5g. Editar «este y los siguientes» desde la UI
+  resetRateLimits();
+  await page.goto(`${BASE}/calendar`);
+  await page.getByRole("tab", { name: "Agenda" }).click();
+  await page.getByRole("button", { name: "Siguiente" }).click();
+  await page.getByRole("button", { name: "Siguiente" }).click(); // 3.ª ocurrencia
+  await page.waitForTimeout(900);
+  await page.locator(".fc").getByText("E2E Semanal").first().click();
+  await page.getByRole("dialog", { name: "Detalle del evento" }).getByRole("button", { name: "Editar" }).click();
+  const sc2 = page.getByRole("dialog", { name: "Editar evento recurrente" });
+  await sc2.getByLabel("Este y los siguientes").check();
+  await sc2.getByRole("button", { name: "Continuar" }).click();
+  const ed2 = page.getByRole("dialog", { name: "Editar evento" });
+  await ed2.getByLabel("Título").fill("E2E Semanal v2");
+  await ed2.getByRole("button", { name: "Guardar cambios" }).click();
+  await page.getByText("Evento actualizado").first().waitFor();
+  const occs2 = ((await api("GET", `/events?q=E2E&from=${tomorrow}&to=${ymd(new Date(Date.now() + 40 * 86_400_000))}&pageSize=100`)).data ?? []).map((o) => o.title);
+  check("«este y los siguientes» divide la serie (2 ocurrencias antiguas + 2 de la serie nueva)", occs2.filter((n) => n.startsWith("E2E Semanal v2")).length === 2 && occs2.filter((n) => n === "E2E Semanal").length === 2, occs2.filter((n) => n.startsWith("E2E Sem")).join(" | "));
+
+  // ── 5h. Evento de día completo
+  await page.getByRole("button", { name: "Nuevo evento" }).click();
+  const ad = page.getByRole("dialog", { name: "Nuevo evento" });
+  await ad.getByLabel("Título").fill("E2E Todo el día");
+  await ad.getByRole("switch", { name: "Todo el día" }).click();
+  await ad.getByLabel("Primer día").fill(nextWeekDay);
+  await ad.getByLabel("Último día").fill(nextWeekDay);
+  await ad.getByRole("button", { name: "Crear evento" }).click();
+  await page.getByText("Evento creado").first().waitFor();
+  const allDay = (await api("GET", `/events?q=E2E%20Todo&pageSize=5`)).data?.[0];
+  check("evento de día completo (endDate exclusivo = +1 día)", allDay?.isAllDay === true && allDay.startDate === nextWeekDay && allDay.endDate > allDay.startDate, `${allDay?.startDate}→${allDay?.endDate}`);
+
+  // ── 5f2. Redimensionar (resize) → PATCH con nueva duración
+  const rz = (await api("POST", "/events", { title: "E2E Resize", startAt: `${tomorrow}T14:00:00.000Z`, endAt: `${tomorrow}T15:00:00.000Z`, force: true })).data;
+  await page.getByRole("tab", { name: "Semana" }).click();
+  await page.getByRole("button", { name: "Hoy" }).click();
+  await page.waitForTimeout(1000);
+  const rzEl = page.locator(".fc-timegrid-event", { hasText: "E2E Resize" }).first();
+  await rzEl.scrollIntoViewIfNeeded();
+  await rzEl.hover();
+  const handle = rzEl.locator(".fc-event-resizer-end");
+  const hb = await handle.boundingBox();
+  const m0 = await page.locator(".fc-timegrid-slot-lane").nth(0).boundingBox();
+  const m1 = await page.locator(".fc-timegrid-slot-lane").nth(1).boundingBox();
+  await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(hb.x + hb.width / 2, hb.y + 20, { steps: 4 });
+  await page.mouse.move(hb.x + hb.width / 2, hb.y + 2 * (m1.y - m0.y), { steps: 8 });
+  await page.mouse.up();
+  let rzAfter = rz;
+  for (let i = 0; i < 20 && rzAfter.durationMinutes === rz.durationMinutes; i++) {
+    await page.waitForTimeout(300);
+    rzAfter = (await api("GET", `/events/${rz.id}`)).data;
+  }
+  check("redimensionar cambia la duración (PATCH endAt)", rzAfter.durationMinutes >= 105 && rzAfter.durationMinutes <= 135 && rzAfter.localTime === rz.localTime, `${rz.durationMinutes} → ${rzAfter.durationMinutes} min`);
   resetRateLimits();
   // ── 5b. Conflicto bloqueante: advertencia en vivo + «guardar de todos modos» (force)
   const blk = await api("POST", "/events", { title: "E2E Bloqueo", startAt: `${tomorrow}T20:00:00.000Z`, endAt: `${tomorrow}T21:00:00.000Z`, isBlocking: true, force: true });
@@ -254,6 +311,44 @@ try {
   await page.getByText("E2E Cat").first().waitFor({ timeout: 8000 }).catch(() => {});
   check("categoría aparece en la lista", await page.getByText("E2E Cat").first().isVisible());
 
+
+  // ── 7b. Fechas especiales: crear / eliminar
+  resetRateLimits();
+  await page.goto(`${BASE}/special-dates`);
+  await page.getByRole("button", { name: "Nueva fecha" }).first().click();
+  const sd = page.getByRole("dialog", { name: "Nueva fecha especial" });
+  await sd.getByLabel("Título").fill("E2E Cumpleaños");
+  await sd.getByLabel("Fecha", { exact: false }).first().fill(`1990-${nextWeekDay.slice(5)}`);
+  await sd.getByRole("button", { name: "Crear fecha" }).click();
+  await page.getByText("Fecha creada").first().waitFor();
+  const sdApi = (await api("GET", `/special-dates?q=E2E&pageSize=5`)).data?.[0];
+  check("fecha especial creada con cuenta atrás (daysUntil)", sdApi?.title === "E2E Cumpleaños" && typeof sdApi.daysUntil === "number", `daysUntil=${sdApi?.daysUntil}`);
+  await page.getByRole("button", { name: /Acciones de «E2E Cumpleaños»/ }).click();
+  await page.getByRole("menuitem", { name: "Eliminar" }).click();
+  await page.getByRole("dialog", { name: "¿Eliminar fecha especial?" }).getByRole("button", { name: "Eliminar" }).click();
+  await page.getByText("Fecha eliminada").first().waitFor();
+  check("fecha especial eliminada", ((await api("GET", `/special-dates?q=E2E&pageSize=5`)).data ?? []).length === 0);
+
+  // ── 7c. Notificaciones: prueba interna → campana → bandeja → marcar leída
+  resetRateLimits();
+  await page.goto(`${BASE}/settings`);
+  await page.getByRole("button", { name: "Enviar prueba" }).nth(2).click(); // interno
+  await page.getByText("Mensaje de prueba enviado").first().waitFor();
+  await page.waitForTimeout(800);
+  check("campana muestra no leídas", /sin leer/.test((await page.locator('header a[href="/notifications"]').getAttribute("aria-label")) ?? ""));
+  await page.goto(`${BASE}/notifications`);
+  await page.getByText("Notificación de prueba").first().waitFor();
+  const unreadBefore = (await api("GET", `/notifications?unread=true&channel=internal&pageSize=1`)).pagination?.total;
+  await page.getByRole("button", { name: "Marcar como leída" }).first().click();
+  await page.waitForTimeout(800);
+  const unreadAfter = (await api("GET", `/notifications?unread=true&channel=internal&pageSize=1`)).pagination?.total;
+  check("marcar leída actualiza la bandeja (API: -1 sin leer)", unreadAfter === unreadBefore - 1, `${unreadBefore} → ${unreadAfter}`);
+
+  // ── 7d. Historial
+  await page.goto(`${BASE}/history`);
+  await page.getByPlaceholder("Acción: event.* / task.create").fill("event.*");
+  await page.getByText("event.create").first().waitFor({ timeout: 8000 });
+  check("historial lista acciones de auditoría con filtro event.*", (await page.getByText(/^event\./).count()) > 0);
   resetRateLimits();
   // ── 8. Settings: prueba de canal sin configurar + token
   await page.goto(`${BASE}/settings`);

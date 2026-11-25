@@ -32,8 +32,8 @@ const MORE = NAV.slice(4);
 
 function Logo({ compact }: { compact?: boolean }) {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2.5 rounded-control" aria-label="Personal Calendar, ir al inicio">
-      <span className="reticle grid size-9 place-items-center rounded-[10px] border border-line-strong bg-surface-2">
+    <Link href="/dashboard" className="flex min-h-11 items-center gap-2.5 rounded-control" aria-label="Personal Calendar, ir al inicio">
+      <span className="reticle grid size-11 place-items-center rounded-[10px] md:size-9 border border-line-strong bg-surface-2">
         <span className="size-2 rounded-full bg-accent pulse-dot" />
       </span>
       {!compact && (

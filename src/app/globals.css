@@ -445,3 +445,7 @@ input[type="color"] {
 .fc .fc-list-event-title {
   color: var(--fg);
 }
+
+.fc .fc-list-event.ev-default .fc-list-event-dot {
+  border-color: var(--accent);
+}

@@ -128,7 +128,7 @@ function Body({ target, onClose }: { target: { id: string; occurrence?: EventDto
 
       <div className="space-y-3">
         <Row icon={<Clock />}>
-          <p className="font-medium capitalize">{fmtDateLong(e.localDate)}{e.endLocalDate !== e.localDate && ` → ${fmtDateLong(e.endLocalDate)}`}</p>
+          <p className="font-medium first-letter:uppercase">{fmtDateLong(e.localDate)}{e.endLocalDate !== e.localDate && ` → ${fmtDateLong(e.endLocalDate)}`}</p>
           <p className="font-mono text-xs text-muted">
             {e.isAllDay ? "Todo el día" : `${e.localTime}–${e.endLocalTime} · ${fmtDuration(e.durationMinutes)}`} · {e.timezone}
           </p>
@@ -194,7 +194,7 @@ function Body({ target, onClose }: { target: { id: string; occurrence?: EventDto
         >
           <CheckSquare className="size-4" aria-hidden /> Crear tarea
         </Button>
-        <Button variant="ghost" className="ml-auto text-danger hover:text-danger" onClick={() => setAskDelete(true)}>
+        <Button variant="ghost" className="ml-auto text-danger! hover:text-danger!" onClick={() => setAskDelete(true)}>
           <Trash2 className="size-4" aria-hidden /> Eliminar
         </Button>
       </div>

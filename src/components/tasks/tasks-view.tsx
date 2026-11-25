@@ -156,7 +156,7 @@ export function TasksView() {
                     <span className={cn("grid size-5 place-items-center rounded-md border-2 transition-colors", done ? "border-accent bg-accent text-accent-ink" : "border-line-strong hover:border-accent")}>{done && <Check className="size-3.5" aria-hidden />}</span>
                   </button>
                   <div className="min-w-0 flex-1">
-                    <button type="button" onClick={() => app.openTaskForm(t)} className="block max-w-full truncate text-left text-sm font-medium hover:text-accent">
+                    <button type="button" onClick={() => app.openTaskForm(t)} className="flex min-h-11 max-w-full items-center truncate text-left text-sm font-medium hover:text-accent md:min-h-0">
                       <span className={cn((done || t.status === "cancelled") && "line-through opacity-60")}>{t.title}</span>
                     </button>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">

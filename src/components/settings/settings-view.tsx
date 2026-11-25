@@ -389,7 +389,7 @@ function Tokens() {
                     <Button variant="outline" size="sm" onClick={() => setRotate(t)}>
                       <RotateCw className="size-3.5" aria-hidden /> Rotar
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-danger hover:text-danger" onClick={() => setRevoke(t)}>
+                    <Button variant="ghost" size="sm" className="text-danger! hover:text-danger!" onClick={() => setRevoke(t)}>
                       <ShieldOff className="size-3.5" aria-hidden /> Revocar
                     </Button>
                   </div>

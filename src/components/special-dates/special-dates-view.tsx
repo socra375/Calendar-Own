@@ -102,7 +102,7 @@ export function SpecialDatesView() {
                   <span className="grid size-10 shrink-0 place-items-center rounded-full" style={{ background: `color-mix(in oklab, ${c} 18%, transparent)`, color: c }}>
                     <DynIcon name={s.icon} className="size-5" fallback="star" />
                   </span>
-                  <button type="button" onClick={() => app.openSpecialDateForm(s)} className="min-w-0 flex-1 text-left">
+                  <button type="button" onClick={() => app.openSpecialDateForm(s)} className="min-h-11 min-w-0 flex-1 text-left">
                     <span className="block truncate text-sm font-medium hover:text-accent">{s.title}</span>
                     <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                       <Badge>{TYPE_LABEL[s.type]}</Badge>

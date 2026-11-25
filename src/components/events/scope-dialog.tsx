@@ -21,6 +21,7 @@ export function ScopeDialog({
   danger,
   loading,
   allowed,
+  allHint,
   onConfirm,
   onClose,
 }: {
@@ -31,6 +32,8 @@ export function ScopeDialog({
   danger?: boolean;
   loading?: boolean;
   allowed?: Scope[];
+  /** Texto extra para «Toda la serie» (p. ej. avisar de que se descartan ocurrencias editadas). */
+  allHint?: string;
   onConfirm: (s: Scope) => void;
   onClose: () => void;
 }) {
@@ -68,7 +71,7 @@ export function ScopeDialog({
             <input type="radio" name={name} className="mt-1 accent-[var(--accent)]" checked={scope === o.id} onChange={() => setScope(o.id)} />
             <span>
               <span className="block text-sm font-medium">{o.label}</span>
-              <span className="block text-xs text-muted">{o.hint}</span>
+              <span className="block text-xs text-muted">{o.id === "all" && allHint ? `${o.hint} ${allHint}` : o.hint}</span>
             </span>
           </label>
         ))}

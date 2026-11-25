@@ -78,10 +78,11 @@ export function Switch({
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-150 disabled:opacity-50",
+          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-150 before:absolute before:-inset-3 before:content-[''] disabled:opacity-50",
           checked ? "border-accent bg-accent" : "border-line-strong bg-surface-2 hover:border-muted",
         )}
       >

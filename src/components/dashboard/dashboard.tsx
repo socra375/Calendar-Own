@@ -22,7 +22,7 @@ const PRIORITY_TONE = { urgent: "danger", high: "warm", medium: "neutral", low: 
 function ItemButton({ item, children, className }: { item: AgendaItem; children: React.ReactNode; className?: string }) {
   const app = useApp();
   return (
-    <button type="button" onClick={() => app.openAgendaItem(item)} className={cn("glow-hover flex w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left hover:bg-surface-2/60", className)}>
+    <button type="button" onClick={() => app.openAgendaItem(item)} className={cn("glow-hover flex min-h-11 w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left hover:bg-surface-2/60", className)}>
       {children}
     </button>
   );
@@ -174,7 +174,7 @@ export function Dashboard() {
 
         {/* Próximos eventos */}
         <Panel className="lg:col-span-5" aria-labelledby="h-up">
-          <PanelHeader label="Pronto" title="Próximos eventos" action={<Link href="/agenda" className="text-xs text-accent hover:underline">Ver agenda</Link>} />
+          <PanelHeader label="Pronto" title="Próximos eventos" action={<Link href="/agenda" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver agenda</Link>} />
           <span id="h-up" className="sr-only">Próximos eventos</span>
           {!d ? (
             <Skeleton className="h-24" />
@@ -199,7 +199,7 @@ export function Dashboard() {
 
         {/* Tareas */}
         <Panel className="lg:col-span-6" aria-labelledby="h-tasks">
-          <PanelHeader label="Pendiente" title="Tareas" action={<Link href="/tasks" className="text-xs text-accent hover:underline">Ver todas</Link>} />
+          <PanelHeader label="Pendiente" title="Tareas" action={<Link href="/tasks" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver todas</Link>} />
           <span id="h-tasks" className="sr-only">Tareas pendientes y vencidas</span>
           {!d ? (
             <Skeleton className="h-24" />
@@ -223,7 +223,7 @@ export function Dashboard() {
 
         {/* Fechas */}
         <Panel className="lg:col-span-6" aria-labelledby="h-sd">
-          <PanelHeader label="Calendario personal" title="Cumpleaños y fechas" action={<Link href="/special-dates" className="text-xs text-accent hover:underline">Ver todas</Link>} />
+          <PanelHeader label="Calendario personal" title="Cumpleaños y fechas" action={<Link href="/special-dates" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver todas</Link>} />
           <span id="h-sd" className="sr-only">Próximos cumpleaños y fechas especiales</span>
           {!d ? (
             <Skeleton className="h-24" />
