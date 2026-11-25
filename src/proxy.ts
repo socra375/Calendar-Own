@@ -15,6 +15,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Excluye API, estáticos, login y /docs (Swagger público).
-  matcher: ["/((?!api|_next|login|docs|favicon.ico|robots.txt|.*\\.[a-zA-Z0-9]+$).*)"],
+  // Excluye API, estáticos, login, recuperación de contraseña y /docs (Swagger público).
+  matcher: ["/((?!api|_next|login|forgot-password|reset-password|docs|favicon.ico|robots.txt|.*\\.[a-zA-Z0-9]+$).*)"],
 };

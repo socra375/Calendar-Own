@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { SESSION_COOKIE, SESSION_TTL_DAYS } from "@/lib/constants";
-import { db } from "../db/client";
+import { db, type DbOrTx } from "../db/client";
 import { sessions, users } from "../db/schema";
 import { parseCookies } from "../http/request-info";
 
@@ -70,6 +70,11 @@ export async function validateSession(
 export async function destroySession(token: string | undefined | null): Promise<void> {
   if (!token) return;
   await db.delete(sessions).where(eq(sessions.tokenHash, hashSessionToken(token)));
+}
+
+/** Destruye TODAS las sesiones del usuario (p. ej. tras cambiar la contraseña). Acepta `tx` para la misma transacción. */
+export async function destroyAllSessions(userId: string, tx: DbOrTx = db): Promise<void> {
+  await tx.delete(sessions).where(eq(sessions.userId, userId));
 }
 
 export function getSessionTokenFromRequest(req: Request): string | undefined {

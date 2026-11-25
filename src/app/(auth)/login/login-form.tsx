@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,19 @@ export function LoginForm() {
       <Field label="Correo">
         {(p) => <Input {...p} type="email" required autoFocus autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />}
       </Field>
+      {params.get("reset") === "1" && (
+        <p role="status" className="rounded-control border border-accent/40 bg-accent/10 p-3 text-sm">
+          Contraseña actualizada. Inicia sesión con la nueva.
+        </p>
+      )}
       <Field label="Contraseña">
         {(p) => <Input {...p} type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
       </Field>
+      <div className="-mt-3 text-right">
+        <Link href="/forgot-password" className="inline-flex min-h-11 items-center rounded-sm text-sm text-accent underline-offset-4 transition-colors duration-150 hover:underline">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
       {error && (
         <p role="alert" className="rounded-control border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
           {error}

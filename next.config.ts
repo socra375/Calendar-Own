@@ -31,7 +31,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ["pg", "@node-rs/argon2"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Las páginas de recuperación llevan el token en la URL: sin Referer para no filtrarlo (la última regla gana).
+    const noReferrer = [{ key: "Referrer-Policy", value: "no-referrer" }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/forgot-password", headers: noReferrer },
+      { source: "/reset-password", headers: noReferrer },
+    ];
   },
 };
 

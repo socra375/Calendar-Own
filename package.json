@@ -53,7 +53,8 @@
     "test:integration": "vitest run --project integration",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate.ts",
-    "db:seed": "tsx src/server/db/seed.ts"
+    "db:seed": "tsx src/server/db/seed.ts",
+    "auth:reset-password": "tsx src/server/auth/cli-reset-password.ts"
   },
   "engines": {
     "node": ">=22"

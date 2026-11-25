@@ -82,6 +82,24 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_idx").on(t.userId), index("sessions_expires_idx").on(t.expiresAt)],
 );
 
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: pk(),
+    userId: userFk(),
+    /** sha256 hex del token; el token en claro solo viaja por correo. */
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: tz("expires_at").notNull(),
+    usedAt: tz("used_at"),
+    requestedIp: text("requested_ip"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("password_reset_tokens_user_idx").on(t.userId),
+    index("password_reset_tokens_expires_idx").on(t.expiresAt),
+  ],
+);
+
 export const rateLimits = pgTable(
   "rate_limits",
   {

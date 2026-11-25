@@ -28,6 +28,15 @@ export async function sendEmail(
   cfg: { apiKey?: string; from?: string; to?: string },
   transports: Transports = {},
 ): Promise<void> {
+  await deliverEmail(renderEmail(msg), cfg, transports);
+}
+
+/** Envío de bajo nivel por Resend de un correo ya renderizado (lo reutilizan otros flujos, p. ej. recuperar contraseña). */
+export async function deliverEmail(
+  mail: { subject: string; html: string; text: string },
+  cfg: { apiKey?: string; from?: string; to?: string },
+  transports: Transports = {},
+): Promise<void> {
   if (!cfg.apiKey || !cfg.from || !cfg.to) {
     throw new ChannelError(
       "CHANNEL_NOT_CONFIGURED",
@@ -35,7 +44,7 @@ export async function sendEmail(
     );
   }
   const client: ResendLike = transports.resend ? transports.resend(cfg.apiKey) : (new Resend(cfg.apiKey) as unknown as ResendLike);
-  const { subject, html, text } = renderEmail(msg);
+  const { subject, html, text } = mail;
   let result: Awaited<ReturnType<ResendLike["emails"]["send"]>>;
   try {
     result = await client.emails.send({ from: cfg.from, to: cfg.to, subject, html, text });

@@ -83,5 +83,35 @@ separado del límite general (120/min).
 Logs de error: `src/server/safe-log.ts` (`safeErrorLog`) registra solo nombre, mensaje truncado sin los `params:` de las
 consultas SQL y el código (p. ej. SQLSTATE); nunca el objeto de error crudo.
 
+## Recuperar contraseña
+
+Flujo por correo (Resend) para el propietario; el esquema ya es multiusuario.
+
+1. En `/login` → "¿Olvidaste tu contraseña?" → `/forgot-password` (`POST /api/auth/forgot-password {email}`). Responde **siempre 200**
+   con el mismo mensaje exista o no el correo (sin enumeración de usuarios; el envío se desacopla de la respuesta con `after()`).
+2. Si la cuenta existe se genera un token de 32 bytes aleatorios (base64url). En BD solo se guarda su **sha256**
+   (`password_reset_tokens`); el correo (`users.email`, no `user_settings`) lleva `${APP_URL}/reset-password?token=...`.
+3. `/reset-password?token=...` (`POST /api/auth/reset-password {token, password}`): contraseña de 12 a 128 caracteres. El token se
+   quita de la URL al leerlo y las páginas envían `Referrer-Policy: no-referrer`. Tras cambiarla redirige a `/login`.
+
+Reglas: el enlace **caduca en 1 hora** y es de **un solo uso**; pedir uno nuevo invalida los anteriores; un reset correcto
+**cierra todas las sesiones** del usuario. Límites: solicitar 3/hora por email+IP y 10/hora por IP (429 `RATE_LIMITED`);
+canjear 10 cada 15 min por IP. Token inexistente/caducado/usado → 400 `INVALID_OR_EXPIRED_TOKEN` (mensaje genérico).
+Auditoría (sin token ni contraseña): `auth.password_reset_requested|completed|failed|email_failed`.
+
+Variables necesarias: `APP_URL` (base del enlace), `RESEND_API_KEY` y `EMAIL_FROM` (remitente de un dominio verificado en Resend).
+Si falta alguna **no se envía ni se simula nada**: la respuesta sigue siendo la genérica y queda `auth.password_reset_email_failed`
+en el historial con el motivo (`CHANNEL_NOT_CONFIGURED` o `APP_URL_NOT_CONFIGURED`), sin secretos.
+
+### Plan B: script de emergencia (sin correo)
+```bash
+DATABASE_URL=postgres://... pnpm auth:reset-password owner@example.com          # pide la contraseña sin eco (y la repite)
+DATABASE_URL=postgres://... NEW_PASSWORD='nueva-contraseña-larga' pnpm auth:reset-password owner@example.com
+echo 'nueva-contraseña-larga' | DATABASE_URL=postgres://... pnpm auth:reset-password owner@example.com
+```
+Aplica la misma política (12–128), guarda el hash argon2id, destruye todas las sesiones, invalida enlaces pendientes y audita
+`auth.password_reset_completed` con actor `system` (`changes.via = "cli"`). Prefiere stdin o el prompt: `NEW_PASSWORD` queda en el
+historial/entorno de la shell.
+
 ## Despliegue
 (Se documentará más adelante.)
