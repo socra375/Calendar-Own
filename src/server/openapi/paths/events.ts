@@ -22,7 +22,7 @@ export const eventOps: OpDef[] = [
   },
   {
     method: "post", path: "/events", tag: "Events", summary: "Crear evento", status: 201, errors: [409],
-    description: "Evento con hora (`startAt` + `endAt`|`durationMinutes`, por defecto 60 min) o de día completo (`isAllDay`, `startDate`, `endDate` exclusivo). `recurrence` crea una serie. Avisos de solapamiento en `meta.conflicts`; 409 BLOCKING_CONFLICT si choca con un evento bloqueante salvo `force:true`.",
+    description: "Evento con hora (`startAt` + `endAt`|`durationMinutes`, por defecto 60 min) o de día completo (`isAllDay`, `startDate`, `endDate` exclusivo). `recurrence` crea una serie. Avisos de solapamiento en `meta.conflicts`; 409 BLOCKING_CONFLICT si choca con un evento bloqueante salvo `force:true`. Recordatorios: si el body NO incluye `reminders` se aplican los recordatorios por defecto del usuario (`GET /settings` → `defaultReminders`); si lo incluye (incluso `[]`) se respeta tal cual y no se aplican los defaults.",
     body: eventCreateBody, response: eventOut, responseExample: eventEx, metaExample: { conflicts: [conflictEx] },
     requestExample: {
       title: "Reunión con Ana", description: "Revisar presupuesto", startAt: "2030-03-04T09:00:00-04:00", durationMinutes: 60,
@@ -52,7 +52,7 @@ export const eventOps: OpDef[] = [
   },
   {
     method: "post", path: "/events/{id}/duplicate", tag: "Events", summary: "Duplicar evento", status: 201, errors: [404, 409],
-    description: "Copia datos, etiquetas, recordatorios y recurrencia (no excepciones). Se puede cambiar título y fecha/hora.",
+    description: "Copia datos, etiquetas, los recordatorios ACTUALES del original (no los defaults del usuario) y recurrencia (no excepciones). Se puede cambiar título y fecha/hora.",
     params: idParam, body: eventDuplicateBody, response: eventOut, responseExample: { ...eventEx, title: "Reunión con Ana (copia)" }, metaExample: { conflicts: [] },
     requestExample: { startAt: "2030-04-01T09:00:00-04:00" },
   },

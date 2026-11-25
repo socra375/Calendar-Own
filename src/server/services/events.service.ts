@@ -32,6 +32,7 @@ import {
   type EventLike,
   type Occurrence,
 } from "../domain/recurrence";
+import { applyDefaultReminders } from "../notifications/defaults";
 import { BlockingConflictError, NotFoundError, ValidationError } from "../http/errors";
 import { andAll, countSql, diff, getSettings, like, offsetOf, sourceOf, type ServiceCtx } from "./common";
 import { resolveTagIds } from "./tags.service";
@@ -46,17 +47,19 @@ export interface Bundle {
   exc: ExcRow[];
 }
 
-const toLike = (ev: EventRow): EventLike => ev as unknown as EventLike;
+export const toLike = (ev: EventRow): EventLike => ev as unknown as EventLike;
 
 // ---------- carga auxiliar ----------
-async function tagsFor(ids: string[]) {
+// Defensa en profundidad: además del id, toda consulta auxiliar filtra por el/los userId dueños de las filas.
+async function tagsFor(userIds: string[], ids: string[]) {
   const map = new Map<string, { id: string; name: string; color: string | null }[]>();
   if (!ids.length) return map;
   const rows = await db
     .select({ eventId: eventTags.eventId, id: tags.id, name: tags.name, color: tags.color })
     .from(eventTags)
     .innerJoin(tags, eq(tags.id, eventTags.tagId))
-    .where(inArray(eventTags.eventId, ids))
+    .innerJoin(events, eq(events.id, eventTags.eventId))
+    .where(and(inArray(eventTags.eventId, ids), inArray(events.userId, userIds), inArray(tags.userId, userIds)))
     .orderBy(asc(sql`lower(${tags.name})`));
   for (const r of rows) {
     const arr = map.get(r.eventId) ?? [];
@@ -66,20 +69,25 @@ async function tagsFor(ids: string[]) {
   return map;
 }
 
-async function categoriesFor(ids: (string | null)[]) {
+async function categoriesFor(userIds: string[], ids: (string | null)[]) {
   const uniq = [...new Set(ids.filter((x): x is string => !!x))];
   const map = new Map<string, { id: string; name: string; color: string }>();
   if (!uniq.length) return map;
-  const rows = await db.select({ id: categories.id, name: categories.name, color: categories.color }).from(categories).where(inArray(categories.id, uniq));
+  const rows = await db.select({ id: categories.id, name: categories.name, color: categories.color }).from(categories)
+    .where(and(inArray(categories.id, uniq), inArray(categories.userId, userIds)));
   for (const r of rows) map.set(r.id, r);
   return map;
 }
 
-async function excFor(ids: string[]) {
+async function excFor(userId: string, ids: string[], conn: DbOrTx = db) {
   const map = new Map<string, ExcRow[]>();
   if (!ids.length) return map;
-  const rows = await db.select().from(eventExceptions).where(inArray(eventExceptions.eventId, ids));
-  for (const r of rows) {
+  const rows = await conn
+    .select({ x: eventExceptions })
+    .from(eventExceptions)
+    .innerJoin(events, eq(events.id, eventExceptions.eventId))
+    .where(and(inArray(eventExceptions.eventId, ids), eq(events.userId, userId)));
+  for (const { x: r } of rows) {
     const arr = map.get(r.eventId) ?? [];
     arr.push(r);
     map.set(r.eventId, arr);
@@ -185,7 +193,8 @@ export function masterDto(b: Bundle, meta: DtoMeta) {
 }
 
 async function metaMap(rows: EventRow[]) {
-  const [t, c] = await Promise.all([tagsFor(rows.map((r) => r.id)), categoriesFor(rows.map((r) => r.categoryId))]);
+  const userIds = [...new Set(rows.map((r) => r.userId))];
+  const [t, c] = await Promise.all([tagsFor(userIds, rows.map((r) => r.id)), categoriesFor(userIds, rows.map((r) => r.categoryId))]);
   return (r: EventRow): DtoMeta => ({ tags: t.get(r.id) ?? [], category: r.categoryId ? (c.get(r.categoryId) ?? null) : null });
 }
 
@@ -241,7 +250,7 @@ export function assertRange(r: { from: Date; to: Date }) {
 }
 
 /** Eventos (con recurrencia/excepciones) que podrían tener ocurrencias en [from,to). */
-async function bundlesInRange(userId: string, from: Date, to: Date, f: OccFilters, tz: string): Promise<Bundle[]> {
+export async function bundlesInRange(userId: string, from: Date, to: Date, f: OccFilters, tz: string, conn: DbOrTx = db): Promise<Bundle[]> {
   const pad = (d: Date, n: number) => addLocalDays(toLocalDate(d, tz), n);
   const fromDate = pad(from, -2);
   const toDate = pad(to, 2);
@@ -273,12 +282,12 @@ async function bundlesInRange(userId: string, from: Date, to: Date, f: OccFilter
       ),
     ),
   ]);
-  const rows = await db
+  const rows = await conn
     .select({ ev: events, rec: eventRecurrence })
     .from(events)
     .leftJoin(eventRecurrence, eq(eventRecurrence.eventId, events.id))
     .where(where);
-  const excMap = await excFor(rows.filter((r) => r.rec).map((r) => r.ev.id));
+  const excMap = await excFor(userId, rows.filter((r) => r.rec).map((r) => r.ev.id), conn);
   return rows.map((r) => ({ ev: r.ev, rec: r.rec, exc: excMap.get(r.ev.id) ?? [] }));
 }
 
@@ -383,7 +392,7 @@ async function loadOwned(userId: string, id: string, opts: { deleted?: boolean }
     .where(and(eq(events.id, id), eq(events.userId, userId), opts.deleted ? isNotNull(events.deletedAt) : isNull(events.deletedAt)))
     .limit(1);
   if (!row) throw new NotFoundError("Evento no encontrado");
-  const exc = row.rec ? (await excFor([id])).get(id) ?? [] : [];
+  const exc = row.rec ? (await excFor(userId, [id])).get(id) ?? [] : [];
   return { ev: row.ev, rec: row.rec, exc };
 }
 
@@ -393,12 +402,12 @@ export async function getEvent(ctx: ServiceCtx, id: string) {
   return {
     ...dto!,
     exceptions: b.exc.map((e) => ({ occurrenceKey: e.occurrenceKey, kind: e.kind, overrides: e.overrides })),
-    reminders: await remindersOf(id),
+    reminders: await remindersOf(ctx.actor.userId, id),
   };
 }
 
-async function remindersOf(eventId: string) {
-  const rows = await db.select().from(reminders).where(eq(reminders.eventId, eventId));
+async function remindersOf(userId: string, eventId: string) {
+  const rows = await db.select().from(reminders).where(and(eq(reminders.eventId, eventId), eq(reminders.userId, userId)));
   return rows.map((r) => ({ id: r.id, offsetMinutes: r.offsetMinutes, channel: r.channel, isActive: r.isActive }));
 }
 
@@ -523,7 +532,9 @@ export async function createEvent(ctx: ServiceCtx, input: EventCreateBody): Prom
     const eventId = row!.id;
     if (rrule) await tx.insert(eventRecurrence).values({ eventId, rrule, seriesEndAt: seriesEnd });
     if (input.tags?.length) await setTags(tx, userId, eventId, input.tags);
-    if (input.reminders?.length)
+    // `reminders` explícito (incluso []) se respeta; si se omite, se aplican user_settings.default_reminders.
+    if (input.reminders === undefined) await applyDefaultReminders(tx, userId, { type: "event", id: eventId });
+    else if (input.reminders.length)
       await tx.insert(reminders).values(input.reminders.map((r) => ({ userId, targetType: "event" as const, eventId, offsetMinutes: r.offsetMinutes, channel: r.channel })));
     return eventId;
   });
@@ -679,9 +690,13 @@ function cloneValues(ev: EventRow, ctx: ServiceCtx, over: Partial<typeof events.
 }
 
 async function copyTagsAndReminders(tx: DbOrTx, fromId: string, toId: string, userId: string) {
-  const t = await tx.select({ tagId: eventTags.tagId }).from(eventTags).where(eq(eventTags.eventId, fromId));
+  const t = await tx
+    .select({ tagId: eventTags.tagId })
+    .from(eventTags)
+    .innerJoin(events, eq(events.id, eventTags.eventId))
+    .where(and(eq(eventTags.eventId, fromId), eq(events.userId, userId)));
   if (t.length) await tx.insert(eventTags).values(t.map((x) => ({ eventId: toId, tagId: x.tagId })));
-  const r = await tx.select().from(reminders).where(eq(reminders.eventId, fromId));
+  const r = await tx.select().from(reminders).where(and(eq(reminders.eventId, fromId), eq(reminders.userId, userId)));
   if (r.length)
     await tx.insert(reminders).values(r.map((x) => ({ userId, targetType: "event" as const, eventId: toId, offsetMinutes: x.offsetMinutes, channel: x.channel, isActive: x.isActive })));
 }

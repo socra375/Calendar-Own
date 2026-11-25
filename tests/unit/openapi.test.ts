@@ -13,12 +13,12 @@ function routeFiles(dir: string, base = ""): { urlPath: string; file: string }[]
   });
 }
 
-const EXCLUDED = new Set(["/health", "/notifications", "/notifications/{id}", "/notifications/test"]);
+const EXCLUDED = new Set(["/health"]);
 
 describe("OpenAPI", () => {
   const doc = getOpenApiDocument() as any;
 
-  it("documenta cada ruta y método de /api/v1 (salvo health y notifications)", () => {
+  it("documenta cada ruta y método de /api/v1 (salvo health)", () => {
     for (const { urlPath, file } of routeFiles(API_ROOT)) {
       if (EXCLUDED.has(urlPath)) continue;
       const src = readFileSync(file, "utf8");

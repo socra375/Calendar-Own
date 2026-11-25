@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { notificationPatchBody } from "@/lib/validation/notifications";
 import { audit } from "@/server/audit/audit.service";
 import { db } from "@/server/db/client";
 import { notifications } from "@/server/db/schema";
@@ -16,7 +17,7 @@ export const PATCH = apiHandler(
   {
     auth: "any",
     params: z.object({ id: z.uuid() }),
-    body: z.object({ read: z.boolean().default(true) }).default({ read: true }),
+    body: notificationPatchBody,
   },
   async (ctx) => {
     const now = new Date();

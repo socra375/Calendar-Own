@@ -60,8 +60,26 @@ minutos). Define los secrets del repo `APP_URL` y `CRON_SECRET`. También sirve 
 `curl -X POST -H "Authorization: Bearer $CRON_SECRET" $APP_URL/api/cron/reminders`.
 
 Recordatorios por defecto: `applyDefaultReminders(tx, userId, { type, id })` (`src/server/notifications/defaults.ts`)
-copia `user_settings.default_reminders` a `reminders` al crear un evento/tarea/fecha especial (idempotente).
+copia `user_settings.default_reminders` a `reminders` (idempotente). Se aplica **dentro de la misma transacción** que crea
+el destino:
+- `POST /events` y `POST /tasks`: si el body **no** trae `reminders` se aplican los defaults; si trae `reminders`
+  (incluso `[]`) se respeta tal cual y **no** se aplican defaults (la UI precarga los defaults en el formulario y los envía
+  explícitos, por lo que no se duplican).
+- `POST /special-dates`: la API no acepta `reminders`, así que siempre se aplican los defaults.
+- `POST /events/:id/duplicate` copia los recordatorios actuales del original, no los defaults.
 Fechas especiales: el disparo se calcula desde las `work_day_start` (08:00 por defecto) del día, en la zona del usuario.
+
+Las ocurrencias que notifica el procesador salen de la misma expansión que el calendario
+(`src/server/notifications/occurrences.ts` es una capa fina sobre `domain/recurrence.ts`): excepciones movidas/canceladas,
+`status: cancelled`, COUNT/UNTIL y día completo coinciden con lo que se ve en pantalla. Una RRULE inválida se registra
+(sin datos sensibles) y se omite ese evento sin detener el ciclo.
+
+`GET /api/v1/notifications` devuelve `meta.unreadCount`: notificaciones sin leer del canal `internal` (la campana), un
+único COUNT independiente de los filtros. `POST /notifications/test` tiene su propio límite (10/min) con contador
+separado del límite general (120/min).
+
+Logs de error: `src/server/safe-log.ts` (`safeErrorLog`) registra solo nombre, mensaje truncado sin los `params:` de las
+consultas SQL y el código (p. ej. SQLSTATE); nunca el objeto de error crudo.
 
 ## Despliegue
 (Se documentará más adelante.)

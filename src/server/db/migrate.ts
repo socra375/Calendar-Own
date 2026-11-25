@@ -3,6 +3,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createDb } from "./create";
+import { safeErrorLog } from "../safe-log";
 
 export async function runMigrations(url: string) {
   const { db, pool } = createDb(url, { max: 1 });
@@ -25,7 +26,7 @@ if (isMain) {
   runMigrations(url)
     .then(() => console.log("Migraciones aplicadas."))
     .catch((e) => {
-      console.error(e);
+      safeErrorLog(e, "[migrate]");
       process.exit(1);
     });
 }

@@ -15,7 +15,7 @@ export const resourceOps: OpDef[] = [
   // ---- tasks ----
   { method: "get", path: "/tasks", tag: "Tasks", summary: "Listar tareas", description: "Filtros: estado (lista separada por comas), prioridad, categoría, evento, etiqueta, rango de vencimiento, `overdue`, búsqueda `q`.", query: taskListQuery, response: taskOut, paginated: true, responseExample: [taskEx] },
   {
-    method: "post", path: "/tasks", tag: "Tasks", summary: "Crear tarea", status: 201, body: taskCreateBody, response: taskDetail, responseExample: { ...taskEx, reminders: [] },
+    method: "post", path: "/tasks", tag: "Tasks", summary: "Crear tarea", description: "Recordatorios: si el body NO incluye `reminders` se aplican los recordatorios por defecto del usuario (`defaultReminders` de `/settings`); si lo incluye (incluso `[]`) se respeta tal cual y no se aplican los defaults.", status: 201, body: taskCreateBody, response: taskDetail, responseExample: { ...taskEx, reminders: [] },
     requestExample: { title: "Enviar presupuesto", dueAt: "2030-03-03T18:00:00-04:00", priority: "high", eventId: ID, tags: ["finanzas"], reminders: [{ offsetMinutes: 60, channel: "internal" }] },
   },
   { method: "get", path: "/tasks/{id}", tag: "Tasks", summary: "Obtener tarea", params: idParam, response: taskDetail, responseExample: { ...taskEx, reminders: [] }, errors: [404] },
@@ -41,7 +41,7 @@ export const resourceOps: OpDef[] = [
     description: "Cada ítem incluye `nextOccurrence`, `daysUntil` y `yearsSince`. Con `from`+`to` devuelve las ocurrencias dentro del rango (`occurrenceDate`). 29-feb se celebra el 28-feb en años no bisiestos.",
     query: specialDateListQuery, response: specialDateOccurrenceOut.or(specialDateOut) as never, paginated: true, responseExample: [specialDateEx],
   },
-  { method: "post", path: "/special-dates", tag: "Special dates", summary: "Crear fecha especial", status: 201, body: specialDateCreateBody, response: specialDateOut, responseExample: specialDateEx, requestExample: { title: "Cumpleaños de Ana", type: "birthday", date: "1990-06-10" } },
+  { method: "post", path: "/special-dates", tag: "Special dates", summary: "Crear fecha especial", description: "Esta API no acepta `reminders`: al crear la fecha se aplican siempre los recordatorios por defecto del usuario (`defaultReminders` de `/settings`). El disparo se calcula desde `workDayStart` del día. Ajusta después con `/reminders`.", status: 201, body: specialDateCreateBody, response: specialDateOut, responseExample: specialDateEx, requestExample: { title: "Cumpleaños de Ana", type: "birthday", date: "1990-06-10" } },
   { method: "get", path: "/special-dates/{id}", tag: "Special dates", summary: "Obtener fecha especial", params: idParam, response: specialDateOut, responseExample: specialDateEx, errors: [404] },
   { method: "patch", path: "/special-dates/{id}", tag: "Special dates", summary: "Actualizar fecha especial", params: idParam, body: specialDateUpdateBody, response: specialDateOut, responseExample: specialDateEx, requestExample: { title: "Cumple de Ana" }, errors: [404] },
   { method: "delete", path: "/special-dates/{id}", tag: "Special dates", summary: "Eliminar fecha especial (borrado suave)", params: idParam, response: idOnly, responseExample: { id: ID }, errors: [404] },

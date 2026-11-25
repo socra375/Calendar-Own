@@ -23,9 +23,5 @@ export const db: Db = new Proxy({} as Db, {
   },
 });
 
-export function getPool() {
-  return getInstance().pool;
-}
-
 /** Tipo de transacción o db, para services que aceptan ambos. */
 export type DbOrTx = Db | Parameters<Parameters<Db["transaction"]>[0]>[0];

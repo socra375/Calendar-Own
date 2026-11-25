@@ -165,27 +165,28 @@ describe("materialización e idempotencia", () => {
 describe("recurrencia", () => {
   it("expande la serie y omite ocurrencias con excepción cancelada", async () => {
     const { user } = await createTestUser();
-    const ev = await mkEvent(user.id, min(60));
-    await db.insert(eventRecurrence).values({ eventId: ev.id, rrule: "FREQ=HOURLY;COUNT=4" });
-    const cancelledKey = min(120).toISOString();
-    await db.insert(eventExceptions).values({ eventId: ev.id, occurrenceKey: cancelledKey, kind: "cancelled" });
+    // Serie diaria (las reglas sub-diarias no son válidas): ocurrencias en -60, +1380 (cancelada) y +2820 min.
+    const ev = await mkEvent(user.id, min(-60));
+    await db.insert(eventRecurrence).values({ eventId: ev.id, rrule: "FREQ=DAILY;COUNT=3" });
+    await db.insert(eventExceptions).values({ eventId: ev.id, occurrenceKey: min(1380).toISOString(), kind: "cancelled" });
     await mkReminder(user.id, { eventId: ev.id }, 0);
     await processReminders({ now: NOW });
+    await processReminders({ now: min(1440) }); // la ventana ahora cubre la 2.ª (cancelada) y la 3.ª
     const keys = (await allNotifs()).map((n) => n.occurrenceKey);
-    expect(keys).toEqual([min(60), min(180), min(240)].map((d) => d.toISOString()));
+    expect(keys).toEqual([min(-60), min(2820)].map((d) => d.toISOString()));
   });
 
   it("cancela una notificación pendiente cuando después se cancela esa ocurrencia", async () => {
     const { user } = await createTestUser();
-    const ev = await mkEvent(user.id, min(60));
-    await db.insert(eventRecurrence).values({ eventId: ev.id, rrule: "FREQ=HOURLY;COUNT=2" });
+    const ev = await mkEvent(user.id, min(-60));
+    await db.insert(eventRecurrence).values({ eventId: ev.id, rrule: "FREQ=DAILY;COUNT=2" });
     await mkReminder(user.id, { eventId: ev.id }, 0);
-    await processReminders({ now: NOW });
-    await db.insert(eventExceptions).values({ eventId: ev.id, occurrenceKey: min(120).toISOString(), kind: "cancelled" });
+    await processReminders({ now: NOW }); // 1.ª enviada, 2.ª (+1380 min) pendiente
+    await db.insert(eventExceptions).values({ eventId: ev.id, occurrenceKey: min(1380).toISOString(), kind: "cancelled" });
     const r = await processReminders({ now: NOW });
     expect(r.cancelled).toBe(1);
     const rows = await allNotifs();
-    expect(rows.map((n) => n.status)).toEqual(["pending", "cancelled"]);
+    expect(rows.map((n) => n.status)).toEqual(["sent", "cancelled"]);
   });
 
   it("aplica la zona horaria del evento (DTSTART local) en series diarias", async () => {
@@ -593,6 +594,30 @@ describe("API /notifications", () => {
     expect(email.json.data.map((n: any) => n.title)).toEqual(["N5"]);
     const bad = await call(listNotifications, "/api/v1/notifications", { token: a.token, query: { status: "nope" } });
     expect(bad.status).toBe(400);
+  });
+
+  it("meta.unreadCount cuenta solo las no leídas del canal internal, sin importar filtros ni paginación, y por usuario", async () => {
+    const a = await createTestActor();
+    const b = await createTestActor({ email: "otro@test.local" });
+    await seed(a.user.id); // internas enviadas sin leer: solo N1 (N2 leída, N3 failed, N4 pending, N5 es email)
+    await seed(b.user.id);
+    await db.update(notifications).set({ readAt: NOW }).where(eq(notifications.userId, b.user.id));
+    const count = async (query: Record<string, string | number> = {}, who = a) =>
+      (await call(listNotifications, "/api/v1/notifications", { token: who.token, query })).json.meta.unreadCount;
+    expect(await count()).toBe(1);
+    expect(await count({ unread: "true", channel: "internal", pageSize: 1 })).toBe(1);
+    expect(await count({ channel: "email" })).toBe(1); // el filtro de la lista no altera el contador
+    expect(await count({ page: 3, pageSize: 2 })).toBe(1);
+    expect(await count({}, b)).toBe(0);
+    const [n] = await db.select().from(notifications).where(and(eq(notifications.userId, a.user.id), eq(notifications.title, "N1")));
+    await call(patchNotification, "/x", { method: "PATCH", token: a.token, params: { id: n!.id }, body: {} });
+    expect(await count()).toBe(0);
+    // una interna pendiente (disparo futuro, aún no enviada) no cuenta como no leída
+    await db.insert(notifications).values({
+      userId: a.user.id, channel: "internal", targetType: "event", targetId: crypto.randomUUID(), occurrenceKey: "future-pending",
+      scheduledFor: new Date(NOW.getTime() + 3600_000), status: "pending", title: "Futura", body: "x",
+    });
+    expect(await count()).toBe(0);
   });
 
   it("PATCH marca leída / no leída", async () => {

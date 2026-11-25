@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { notificationTestBody } from "@/lib/validation/notifications";
 import { audit } from "@/server/audit/audit.service";
 import { db } from "@/server/db/client";
 import { notifications, userSettings } from "@/server/db/schema";
@@ -14,17 +14,11 @@ import { created } from "@/server/http/response";
 export const dynamic = "force-dynamic";
 export const OPTIONS = preflight;
 
-const body = z.object({
-  channel: z.enum(["internal", "telegram", "email"]),
-  title: z.string().trim().min(1).max(200).default("Notificación de prueba"),
-  message: z.string().trim().max(2000).default("Si ves esto, el canal funciona correctamente."),
-});
-
 /**
  * POST /notifications/test — envía un mensaje de prueba por el canal indicado con la configuración real.
  * Deja una fila en la bandeja (occurrence_key 'test:…') con el resultado. Sin credenciales → 422 CHANNEL_NOT_CONFIGURED.
  */
-export const POST = apiHandler({ auth: "any", body, rateLimit: { limit: 10, windowSeconds: 60 } }, async (ctx) => {
+export const POST = apiHandler({ auth: "any", body: notificationTestBody, rateLimit: { limit: 10, windowSeconds: 60 } }, async (ctx) => {
   const { userId } = ctx.actor;
   const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId)).limit(1);
   const now = new Date();

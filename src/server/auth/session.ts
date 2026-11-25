@@ -72,10 +72,6 @@ export async function destroySession(token: string | undefined | null): Promise<
   await db.delete(sessions).where(eq(sessions.tokenHash, hashSessionToken(token)));
 }
 
-export async function destroyAllSessions(userId: string): Promise<void> {
-  await db.delete(sessions).where(eq(sessions.userId, userId));
-}
-
 export function getSessionTokenFromRequest(req: Request): string | undefined {
   return parseCookies(req.headers.get("cookie"))[SESSION_COOKIE];
 }

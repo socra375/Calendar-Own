@@ -11,8 +11,9 @@ const CHANNELS = new Set(["internal", "telegram", "email"]);
 
 /**
  * Crea los recordatorios por defecto (`user_settings.default_reminders`) para un destino recién creado.
- * Pensada para llamarse dentro de la misma transacción que crea el evento/tarea/fecha especial:
- *   await db.transaction(async (tx) => { const ev = await insertEvent(tx, …); await applyDefaultReminders(tx, userId, { type: "event", id: ev.id }); });
+ * Se llama dentro de la misma transacción que crea el evento/tarea/fecha especial, y SOLO cuando la petición no
+ * trae `reminders` explícitos (ver `createEvent`/`createTask`/`createSpecialDate`; un `reminders: []` explícito se respeta):
+ *   await tx.insert(events).values(…).returning(); await applyDefaultReminders(tx, userId, { type: "event", id });
  *
  * - Idempotente: no duplica un (offset, canal) que el destino ya tenga; ignora duplicados y entradas inválidas
  *   (offset no entero o negativo, canal desconocido) dentro de la propia configuración.

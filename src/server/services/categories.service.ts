@@ -105,7 +105,7 @@ export async function restoreCategory(ctx: ServiceCtx, id: string) {
     .where(and(eq(categories.userId, ctx.actor.userId), isNull(categories.deletedAt), sql`lower(${categories.name}) = lower(${before.name})`))
     .limit(1);
   if (clash.length) throw new ConflictError("Ya existe una categoría activa con ese nombre");
-  const [row] = await db.update(categories).set({ deletedAt: null, updatedAt: new Date() }).where(eq(categories.id, id)).returning();
+  const [row] = await db.update(categories).set({ deletedAt: null, updatedAt: new Date() }).where(and(eq(categories.id, id), eq(categories.userId, ctx.actor.userId))).returning();
   await audit(ctx, { action: "category.restore", resourceType: "category", resourceId: id });
   return toCategoryDto(row!);
 }

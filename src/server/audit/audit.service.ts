@@ -1,6 +1,7 @@
 import "server-only";
 import { db as defaultDb, type DbOrTx } from "../db/client";
 import { auditLogs } from "../db/schema";
+import { safeErrorLog } from "../safe-log";
 
 const SENSITIVE = /(pass(word|wd)?|token|secret|authorization|cookie|api[-_]?key|hash|credential)/i;
 
@@ -65,6 +66,6 @@ export async function audit(source: AuditSource, entry: AuditEntry, tx: DbOrTx =
       userAgent: source.userAgent ?? null,
     });
   } catch (e) {
-    console.error("[audit] no se pudo registrar", entry.action, e);
+    safeErrorLog(e, `[audit] no se pudo registrar ${entry.action}`);
   }
 }

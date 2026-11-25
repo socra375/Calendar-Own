@@ -53,7 +53,8 @@ function Inner({ user, children }: { user: { name: string; email: string }; chil
       weekStartsOn: settingsQ.data?.weekStartsOn ?? 1,
       categories: catQ.data ?? [],
       tags: tagQ.data ?? [],
-      unread: unreadQ.pagination?.total ?? 0,
+      // meta.unreadCount = no leídas internas (un COUNT barato); el total paginado es el respaldo.
+      unread: (typeof unreadQ.meta?.unreadCount === "number" ? unreadQ.meta.unreadCount : unreadQ.pagination?.total) ?? 0,
       version,
       bump,
       openEventForm: (r) => setEventForm(r ?? {}),
@@ -67,7 +68,7 @@ function Inner({ user, children }: { user: { name: string; email: string }; chil
       openTaskForm: (task, defaults) => setTaskForm({ task: task ?? null, defaults }),
       openSpecialDateForm: (sd) => setSdForm({ sd: sd ?? null }),
     }),
-    [user, settingsQ.data, catQ.data, tagQ.data, unreadQ.pagination, version, bump, toast],
+    [user, settingsQ.data, catQ.data, tagQ.data, unreadQ.meta, unreadQ.pagination, version, bump, toast],
   );
 
   return (

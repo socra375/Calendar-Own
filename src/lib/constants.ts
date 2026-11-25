@@ -2,7 +2,6 @@ export const SESSION_COOKIE = "pc_session";
 export const SESSION_TTL_DAYS = 30;
 export const TOKEN_PREFIX = "pc_";
 export const DEFAULT_TIMEZONE = "America/Santo_Domingo";
-export const API_BASE = "/api/v1";
 
 export const ERROR_CODES = {
   VALIDATION_ERROR: 400,

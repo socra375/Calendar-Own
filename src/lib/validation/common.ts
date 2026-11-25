@@ -67,4 +67,3 @@ export const envelope = <T extends z.ZodType>(data: T) =>
     meta: z.object({ requestId: z.string(), conflicts: z.array(conflictItemOut).optional() }).passthrough(),
   });
 
-export const nullableText = (max: number) => z.string().max(max).nullable();

@@ -6,7 +6,6 @@ import { addLocalDays, startOfLocalDay, startOfNextLocalDay, toLocalDate, utcToL
 export function toIso(d: Date, tz: string): string {
   return new TZDate(d.getTime(), tz).toISOString();
 }
-export const toIsoOrNull = (d: Date | null | undefined, tz: string) => (d ? toIso(d, tz) : null);
 
 /** 'HH:mm' local. */
 export function localTime(d: Date, tz: string): string {

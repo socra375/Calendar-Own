@@ -9,6 +9,7 @@ import { enforceRateLimit } from "./rate-limit";
 import { getIp, getUserAgent } from "./request-info";
 import { requestStore } from "./request-context";
 import { fail } from "./response";
+import { safeErrorLog } from "../safe-log";
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const MAX_BODY_BYTES = 1_000_000;
@@ -175,6 +176,6 @@ export function apiHandler<
 function toErrorResponse(err: unknown, requestId: string): Response {
   if (err instanceof AppError) return fail(err);
   if (err instanceof ZodError) return fail(new ValidationError("Datos inválidos", formatZod(err)));
-  console.error(`[api] error no controlado requestId=${requestId}`, err);
+  safeErrorLog(err, `[api] error no controlado requestId=${requestId}`);
   return fail(new AppError("INTERNAL_ERROR", 500, "Error interno del servidor"));
 }

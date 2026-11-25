@@ -6,6 +6,7 @@ import { specialDates } from "../db/schema";
 import { resolveBound } from "../domain/format";
 import { daysBetween, nextOccurrence, occurrencesBetween, yearsSince } from "../domain/special-dates";
 import { addLocalDays, toLocalDate } from "../domain/time";
+import { applyDefaultReminders } from "../notifications/defaults";
 import { NotFoundError, ValidationError } from "../http/errors";
 import { andAll, diff, getSettings, like, offsetOf, type ServiceCtx } from "./common";
 
@@ -87,15 +88,20 @@ export async function createSpecialDate(
   ctx: ServiceCtx,
   i: { title: string; type: Row["type"]; date: string; recursYearly?: boolean; color?: string | null; icon?: string | null; description?: string | null },
 ) {
-  const [r] = await db
-    .insert(specialDates)
-    .values({
-      userId: ctx.actor.userId, title: i.title, type: i.type, date: i.date,
-      // cumpleaños/festivos/aniversarios se repiten por defecto
-      recursYearly: i.recursYearly ?? ["birthday", "anniversary", "holiday"].includes(i.type),
-      color: i.color ?? null, icon: i.icon ?? null, description: i.description ?? null,
-    })
-    .returning();
+  const r = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(specialDates)
+      .values({
+        userId: ctx.actor.userId, title: i.title, type: i.type, date: i.date,
+        // cumpleaños/festivos/aniversarios se repiten por defecto
+        recursYearly: i.recursYearly ?? ["birthday", "anniversary", "holiday"].includes(i.type),
+        color: i.color ?? null, icon: i.icon ?? null, description: i.description ?? null,
+      })
+      .returning();
+    // La API de fechas especiales no acepta `reminders`: siempre se aplican los recordatorios por defecto.
+    await applyDefaultReminders(tx, ctx.actor.userId, { type: "special_date", id: row!.id });
+    return row;
+  });
   await audit(ctx, { action: "special_date.create", resourceType: "special_date", resourceId: r!.id, changes: { title: r!.title, type: r!.type, date: r!.date } });
   return specialDateDto(r!, await todayOf(ctx.actor.userId));
 }

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { hashPassword } from "../auth/password";
 import { createDb } from "./create";
 import { categories, specialDates, userSettings, users } from "./schema";
+import { safeErrorLog } from "../safe-log";
 
 const CATEGORIES = [
   { name: "Estudios ITLA", color: "#2563eb", icon: "graduation-cap" },
@@ -102,7 +103,7 @@ if (isMain) {
   seed(DATABASE_URL, { email: OWNER_EMAIL, password: OWNER_PASSWORD, timezone: DEFAULT_TIMEZONE })
     .then(() => console.log("Seed completo."))
     .catch((e) => {
-      console.error(e);
+      safeErrorLog(e, "[seed]");
       process.exit(1);
     });
 }

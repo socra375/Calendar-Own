@@ -6,6 +6,7 @@ import { db, type DbOrTx } from "../db/client";
 import { categories, events, reminders, tags, taskTags, tasks } from "../db/schema";
 import { localTime, resolveBound, toIso } from "../domain/format";
 import { toLocalDate } from "../domain/time";
+import { applyDefaultReminders } from "../notifications/defaults";
 import { NotFoundError, ValidationError } from "../http/errors";
 import { andAll, countSql, diff, getSettings, like, offsetOf, sourceOf, type ServiceCtx } from "./common";
 import { assertEventOwned } from "./events.service";
@@ -15,20 +16,23 @@ type Row = typeof tasks.$inferSelect;
 
 async function metaFor(rows: Row[]) {
   const ids = rows.map((r) => r.id);
+  // Defensa en profundidad: además del id, toda consulta filtra por el/los userId dueños de las tareas.
+  const userIds = [...new Set(rows.map((r) => r.userId))];
   const tagMap = new Map<string, { id: string; name: string; color: string | null }[]>();
   if (ids.length) {
     const t = await db
       .select({ taskId: taskTags.taskId, id: tags.id, name: tags.name, color: tags.color })
       .from(taskTags)
       .innerJoin(tags, eq(tags.id, taskTags.tagId))
-      .where(inArray(taskTags.taskId, ids))
+      .innerJoin(tasks, eq(tasks.id, taskTags.taskId))
+      .where(and(inArray(taskTags.taskId, ids), inArray(tasks.userId, userIds), inArray(tags.userId, userIds)))
       .orderBy(asc(sql`lower(${tags.name})`));
     for (const r of t) tagMap.set(r.taskId, [...(tagMap.get(r.taskId) ?? []), { id: r.id, name: r.name, color: r.color }]);
   }
   const catIds = [...new Set(rows.map((r) => r.categoryId).filter((x): x is string => !!x))];
   const evIds = [...new Set(rows.map((r) => r.eventId).filter((x): x is string => !!x))];
-  const cats = catIds.length ? await db.select({ id: categories.id, name: categories.name, color: categories.color }).from(categories).where(inArray(categories.id, catIds)) : [];
-  const evs = evIds.length ? await db.select({ id: events.id, title: events.title }).from(events).where(inArray(events.id, evIds)) : [];
+  const cats = catIds.length ? await db.select({ id: categories.id, name: categories.name, color: categories.color }).from(categories).where(and(inArray(categories.id, catIds), inArray(categories.userId, userIds))) : [];
+  const evs = evIds.length ? await db.select({ id: events.id, title: events.title }).from(events).where(and(inArray(events.id, evIds), inArray(events.userId, userIds))) : [];
   const catMap = new Map(cats.map((c) => [c.id, c]));
   const evMap = new Map(evs.map((e) => [e.id, e]));
   return { tagMap, catMap, evMap };
@@ -121,7 +125,7 @@ async function dtoOf(userId: string, row: Row) {
 export async function getTask(ctx: ServiceCtx, id: string) {
   const row = await loadOwned(ctx.actor.userId, id);
   const dto = await dtoOf(ctx.actor.userId, row);
-  const rem = await db.select().from(reminders).where(eq(reminders.taskId, id));
+  const rem = await db.select().from(reminders).where(and(eq(reminders.taskId, id), eq(reminders.userId, ctx.actor.userId)));
   return { ...dto, reminders: rem.map((r) => ({ id: r.id, offsetMinutes: r.offsetMinutes, channel: r.channel, isActive: r.isActive })) };
 }
 
@@ -145,7 +149,9 @@ export async function createTask(ctx: ServiceCtx, input: TaskCreateBody) {
       })
       .returning({ id: tasks.id });
     if (input.tags?.length) await setTags(tx, userId, row!.id, input.tags);
-    if (input.reminders?.length)
+    // `reminders` explícito (incluso []) se respeta; si se omite, se aplican user_settings.default_reminders.
+    if (input.reminders === undefined) await applyDefaultReminders(tx, userId, { type: "task", id: row!.id });
+    else if (input.reminders.length)
       await tx.insert(reminders).values(input.reminders.map((r) => ({ userId, targetType: "task" as const, taskId: row!.id, offsetMinutes: r.offsetMinutes, channel: r.channel })));
     return row!.id;
   });
