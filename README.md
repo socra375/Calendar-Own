@@ -53,11 +53,13 @@ cualquier mensaje a tu bot y abre `https://api.telegram.org/bot<TOKEN>/getUpdate
 **Resend**: crea cuenta en resend.com, verifica un dominio, crea una API key (`RESEND_API_KEY`) y usa un remitente de ese
 dominio en `EMAIL_FROM` (p. ej. `Agenda <agenda@tudominio.com>`).
 
-**Frecuencia del cron**: `vercel.json` programa `*/5 * * * *`, pero **el plan Hobby de Vercel solo admite crons diarios**
-(el despliegue falla o se ejecuta una vez al día). Opciones: Vercel Pro, o quitar el cron de `vercel.json` y usar el
-workflow `.github/workflows/reminders-cron.yml` (GitHub Actions cada 5 min; los crons de Actions pueden retrasarse unos
-minutos). Define los secrets del repo `APP_URL` y `CRON_SECRET`. También sirve cron-job.org con
-`curl -X POST -H "Authorization: Bearer $CRON_SECRET" $APP_URL/api/cron/reminders`.
+**Frecuencia del cron**: `vercel.json` programa un cron **diario** (`0 12 * * *` UTC) porque el plan Hobby de Vercel
+rechaza expresiones que se ejecuten más de una vez al día (el despliegue falla). Ese cron diario es solo un respaldo.
+Para recordatorios puntuales ("5 minutos antes") hace falta una ejecución frecuente:
+- **Gratis**: el workflow `.github/workflows/reminders-cron.yml` (GitHub Actions cada 5 min; pueden retrasarse unos
+  minutos). Define los secrets del repo `APP_URL` y `CRON_SECRET`. También sirve cron-job.org con
+  `curl -X POST -H "Authorization: Bearer $CRON_SECRET" $APP_URL/api/cron/reminders`.
+- **Vercel Pro**: cambia el schedule de `vercel.json` a `*/5 * * * *`.
 
 Recordatorios por defecto: `applyDefaultReminders(tx, userId, { type, id })` (`src/server/notifications/defaults.ts`)
 copia `user_settings.default_reminders` a `reminders` (idempotente). Se aplica **dentro de la misma transacción** que crea
