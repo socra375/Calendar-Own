@@ -17,7 +17,9 @@ export const toTagDto = (t: TagRow) => ({
 
 /** Resuelve (y crea si faltan) etiquetas por nombre, sin distinguir mayúsculas. Devuelve ids. */
 export async function resolveTagIds(tx: DbOrTx, userId: string, names: string[]): Promise<string[]> {
-  const clean = [...new Map(names.map((n) => [n.trim().toLowerCase(), n.trim()])).entries()].filter(([k]) => k);
+  const seen = new Map<string, string>();
+  for (const n of names) if (n.trim() && !seen.has(n.trim().toLowerCase())) seen.set(n.trim().toLowerCase(), n.trim());
+  const clean = [...seen.entries()];
   if (!clean.length) return [];
   await tx
     .insert(tags)

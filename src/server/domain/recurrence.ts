@@ -444,3 +444,11 @@ export function occurrenceForKey(
   const base = occurrenceFromFloating(event, f, tz, Boolean(recurrence));
   return exc ? applyOverrides(base, exc.overrides) : base;
 }
+
+/** El evento tal cual está guardado (primera ocurrencia / evento único), sin excepciones. */
+export function masterOccurrence(event: EventLike, recurring: boolean, tz: string = event.timezone): Occurrence {
+  if (event.isAllDay) return occurrenceFromFloating(event, floatingFromLocal(event.startDate!), tz, recurring);
+  return baseOccurrence({ ...event, timezone: tz }, event.startAt!, event.endAt!, event.startAt!.toISOString(), recurring);
+}
+
+export { keyToFloating };

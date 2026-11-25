@@ -47,8 +47,11 @@ export const conflictItemOut = z.object({
   eventId: z.string(),
   occurrenceKey: z.string(),
   title: z.string(),
-  start: z.string(),
+  start: z.string().describe("ISO con offset"),
   end: z.string(),
+  localDate: z.string(),
+  localStartTime: z.string().nullable(),
+  localEndTime: z.string().nullable(),
   isBlocking: z.boolean(),
   isAllDay: z.boolean(),
 });

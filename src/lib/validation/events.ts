@@ -187,7 +187,7 @@ export const eventOut = z.object({
   timezone: z.string(),
   localDate: z.string().describe("YYYY-MM-DD de inicio en la zona del evento"),
   localTime: z.string().nullable().describe("HH:mm de inicio (null si día completo)"),
-  endLocalDate: z.string(),
+  endLocalDate: z.string().describe("Último día local (día completo: último día incluido)"),
   endLocalTime: z.string().nullable(),
   durationMinutes: z.number().int(),
   categoryId: uuid.nullable(),
