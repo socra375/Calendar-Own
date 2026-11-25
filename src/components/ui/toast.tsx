@@ -64,14 +64,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <li
                 key={t.id}
                 role={t.kind === "error" ? "alert" : "status"}
-                className="flex items-start gap-3 rounded-card border border-line-strong bg-surface p-3 text-sm shadow-hud backdrop-blur [animation:toast-in_0.2s_var(--ease)]"
+                className="flex items-start gap-3 rounded-card border border-line bg-surface p-3.5 text-sm shadow-[var(--sh-pop)] [animation:toast-in_0.24s_var(--ease)]"
               >
                 <Icon className={cn("mt-0.5 size-4 shrink-0", tone[t.kind])} aria-hidden />
                 <span className="min-w-0 flex-1 break-words">{t.message}</span>
                 <button
                   type="button"
                   onClick={() => setItems((s) => s.filter((x) => x.id !== t.id))}
-                  className="-m-1 rounded p-1 text-muted hover:text-fg"
+                  className="-m-1 grid size-8 place-items-center rounded-md text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg"
                   aria-label="Cerrar aviso"
                 >
                   <X className="size-3.5" aria-hidden />

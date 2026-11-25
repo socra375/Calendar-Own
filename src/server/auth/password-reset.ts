@@ -44,7 +44,7 @@ export function renderResetEmail(link: string): { subject: string; html: string;
 <p style="margin:0 0 4px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#78716c">Personal Calendar</p>
 <h1 style="margin:0 0 12px;font-size:18px;line-height:1.3">Restablece tu contraseña</h1>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.5">Recibimos una solicitud para cambiar la contraseña de tu cuenta. Pulsa el botón para elegir una nueva. El enlace caduca en 1 hora y solo puede usarse una vez.</p>
-<p style="margin:0 0 20px"><a href="${safe}" style="display:inline-block;padding:10px 18px;background:#0f9488;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600">Cambiar contraseña</a></p>
+<p style="margin:0 0 20px"><a href="${safe}" style="display:inline-block;padding:10px 18px;background:#BE3F0A;color:#ffffff;text-decoration:none;border-radius:8px;font-size:15px;font-weight:600">Cambiar contraseña</a></p>
 <p style="margin:0 0 6px;font-size:13px;line-height:1.5;color:#57534e">Si el botón no funciona, copia y pega esta dirección en tu navegador:</p>
 <p style="margin:0 0 16px;font-size:12px;line-height:1.5;word-break:break-all;color:#57534e">${safe}</p>
 <p style="margin:0;font-size:13px;line-height:1.5;color:#57534e">Si no solicitaste este cambio, ignora este correo: tu contraseña no se modificará.</p>

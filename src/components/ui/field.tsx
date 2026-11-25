@@ -4,7 +4,7 @@ import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttribu
 import { cn } from "@/lib/cn";
 
 export const controlClass =
-  "w-full rounded-control border border-line bg-surface-2/60 px-3 text-sm text-fg placeholder:text-muted/70 transition-[border-color,box-shadow] duration-150 hover:border-line-strong focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50 aria-[invalid=true]:border-danger";
+  "w-full rounded-control border border-line-strong/70 bg-surface px-3 text-sm text-fg placeholder:text-muted/70 transition-[border-color,box-shadow,background-color] duration-200 ease-[var(--ease)] hover:border-line-strong focus-visible:border-accent focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent/20 disabled:opacity-50 aria-[invalid=true]:border-danger aria-[invalid=true]:focus-visible:ring-danger/20";
 
 /** Etiqueta + control + ayuda/error con ids enlazados. */
 export function Field({
@@ -29,7 +29,7 @@ export function Field({
       </label>
       {children({ id, "aria-describedby": hint || error ? dId : undefined, "aria-invalid": error ? true : undefined })}
       {(error || hint) && (
-        <p id={dId} role={error ? "alert" : undefined} className={cn("text-xs", error ? "text-danger" : "text-muted")}>
+        <p id={dId} role={error ? "alert" : undefined} className={cn("text-xs leading-5", error ? "text-danger" : "text-muted")}>
           {error || hint}
         </p>
       )}
@@ -45,7 +45,7 @@ export function Textarea({ className, ...p }: TextareaHTMLAttributes<HTMLTextAre
 }
 export function Select({ className, children, ...p }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select className={cn(controlClass, "h-11 appearance-none bg-no-repeat pr-8 md:h-10", className)} style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a9496' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundPosition: "right 12px center" }} {...p}>
+    <select className={cn(controlClass, "h-11 appearance-none bg-no-repeat pr-8 md:h-10", className)} style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a7d70' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundPosition: "right 12px center" }} {...p}>
       {children}
     </select>
   );
@@ -82,14 +82,14 @@ export function Switch({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-150 before:absolute before:-inset-3 before:content-[''] disabled:opacity-50",
+          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full border transition-colors duration-200 before:absolute before:-inset-3 before:content-[''] disabled:opacity-50",
           checked ? "border-accent bg-accent" : "border-line-strong bg-surface-2 hover:border-muted",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 left-0.5 size-4.5 rounded-full transition-transform duration-150",
-            checked ? "translate-x-5 bg-accent-ink" : "bg-muted",
+            "absolute top-0.5 left-0.5 size-4.5 rounded-full shadow-sm transition-[transform,background-color] duration-200 ease-[var(--ease)]",
+            checked ? "translate-x-5 bg-accent-ink" : "bg-muted/80",
           )}
         />
       </button>

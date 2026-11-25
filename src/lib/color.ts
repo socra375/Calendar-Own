@@ -13,10 +13,10 @@ export function readableOn(hex: string): string {
   const L = luminance(hex);
   const withWhite = 1.05 / (L + 0.05);
   const withBlack = (L + 0.05) / 0.05;
-  return withWhite >= withBlack ? "#ffffff" : "#0b0d0e";
+  return withWhite >= withBlack ? "#ffffff" : "#1f1a17";
 }
 
 export const PALETTE = [
-  "#2dd4bf", "#0f9488", "#2563eb", "#7c3aed", "#db2777", "#dc2626",
-  "#d97706", "#f5b84b", "#059669", "#6ee7a8", "#64748b", "#a855f7",
+  "#e8590c", "#be3f0a", "#d97706", "#f2b84b", "#8a9a3b", "#2f7d4f",
+  "#0f766e", "#6d5ba6", "#b83a6a", "#a14a2f", "#7a5c3e", "#5f6b73",
 ];

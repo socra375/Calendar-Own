@@ -38,60 +38,62 @@ await task({ title: "Demo · Comprar regalo", dueAt: at(3, "12:00"), priority: "
 const sd = async (b) => ids.sds.push((await api("POST", "/special-dates", b)).data?.id);
 await sd({ title: "Demo · Cumpleaños de Ana", type: "birthday", date: `1995-${day(4).slice(5)}`, recursYearly: true, icon: "cake", color: "#db2777" });
 
-async function shot(name, viewport, scheme) {
+const VPS = [
+  ["1280", { width: 1280, height: 800 }],
+  ["390", { width: 390, height: 844 }],
+];
+async function prep(vp, scheme) {
   resetRateLimits();
-  await page.setViewportSize(viewport);
+  await page.setViewportSize(vp);
   await page.emulateMedia({ colorScheme: scheme });
   await page.evaluate((t) => localStorage.setItem("theme", t), scheme);
-  await page.goto(`${BASE}/dashboard`);
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: `${OUT}dashboard-${name}.png` });
-  await page.goto(`${BASE}/calendar`);
-  await page.waitForTimeout(500);
-  await page.getByRole("tab", { name: viewport.width < 768 ? "Agenda" : "Mes" }).click();
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}calendar-${name}.png`, fullPage: false });
-  if (viewport.width >= 768) {
+}
+const snap = (name, scheme, tag) => page.screenshot({ path: `${OUT}${name}-${scheme}-${tag}.png` });
+
+for (const scheme of ["light", "dark"]) {
+  for (const [tag, vp] of VPS) {
+    const mobile = vp.width < 768;
+    await prep(vp, scheme);
+    await page.goto(`${BASE}/dashboard`);
+    await page.waitForTimeout(1500);
+    await snap("dashboard", scheme, tag);
+    await page.goto(`${BASE}/calendar`);
+    await page.waitForTimeout(500);
+    await page.getByRole("tab", { name: mobile ? "Agenda" : "Mes" }).click();
+    await page.waitForTimeout(1200);
+    await snap("calendar", scheme, tag);
     await page.getByRole("tab", { name: "Semana" }).click();
     await page.waitForTimeout(1200);
-    await page.screenshot({ path: `${OUT}calendar-week-${name}.png` });
-  }
-}
-await shot("dark-1280", { width: 1280, height: 800 }, "dark");
-await shot("light-1280", { width: 1280, height: 800 }, "light");
-await shot("dark-390", { width: 390, height: 844 }, "dark");
-await shot("light-390", { width: 390, height: 844 }, "light");
-
-if (process.argv.includes("--all")) {
-  for (const [scheme, vp, tag] of [["dark", { width: 1280, height: 800 }, "dark-1280"], ["dark", { width: 390, height: 844 }, "dark-390"]]) {
-    await page.setViewportSize(vp);
-    await page.evaluate((t) => localStorage.setItem("theme", t), scheme);
-    resetRateLimits();
-    for (const r of ["tasks", "special-dates", "categories", "notifications", "history", "settings", "agenda"]) {
+    await snap("calendar-week", scheme, tag);
+    await page.getByRole("tab", { name: "Agenda" }).click();
+    await page.waitForTimeout(1000);
+    await page.locator(".fc").getByText("Demo · Revisión del proyecto").first().click();
+    await page.waitForTimeout(700);
+    await snap("event-detail", scheme, tag);
+    await page.getByRole("button", { name: "Editar" }).click();
+    await page.getByRole("dialog", { name: "Editar evento" }).getByLabel("Título").waitFor();
+    await page.waitForTimeout(500);
+    await snap("event-form", scheme, tag);
+    await page.keyboard.press("Escape");
+    for (const r of ["tasks", "settings", "agenda", "special-dates", "categories", "notifications", "history"]) {
       if (r === "special-dates" || r === "history") resetRateLimits();
       await page.goto(`${BASE}/${r}`);
       await page.waitForTimeout(1200);
-      await page.screenshot({ path: `${OUT}${r}-${tag}.png` });
+      await snap(r, scheme, tag);
     }
   }
 }
 
-// Formulario y detalle (móvil y escritorio)
-for (const [vp, tag] of [[{ width: 1280, height: 800 }, "1280"], [{ width: 390, height: 844 }, "390"]]) {
-  resetRateLimits();
-  await page.setViewportSize(vp);
-  await page.evaluate((t) => localStorage.setItem("theme", t), "dark");
-  await page.goto(`${BASE}/calendar`);
-  await page.getByRole("tab", { name: "Agenda" }).click();
-  await page.waitForTimeout(1000);
-  await page.locator(".fc").getByText("Demo · Revisión del proyecto").first().click();
-  await page.waitForTimeout(700);
-  await page.screenshot({ path: `${OUT}event-detail-dark-${tag}.png` });
-  await page.getByRole("button", { name: "Editar" }).click();
-  await page.getByRole("dialog", { name: "Editar evento" }).getByLabel("Título").waitFor();
-  await page.waitForTimeout(500);
-  await page.screenshot({ path: `${OUT}event-form-dark-${tag}.png` });
-  await page.keyboard.press("Escape");
+// Login (sin sesión): contexto limpio
+for (const scheme of ["light", "dark"]) {
+  for (const [tag, vp] of VPS) {
+    const s = await launch(vp, scheme);
+    await s.ctx.addInitScript((t) => localStorage.setItem("theme", t), scheme);
+    await s.page.goto(`${BASE}/login`);
+    await s.page.waitForTimeout(1800);
+    await s.page.screenshot({ path: `${OUT}login-${scheme}-${tag}.png` });
+    await s.browser.close();
+  }
 }
 
 // Limpieza de los datos de demostración

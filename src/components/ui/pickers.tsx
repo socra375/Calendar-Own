@@ -46,7 +46,7 @@ export function ColorPicker({ value, onChange, label = "Color", allowNone }: { v
       <input
         id={customId}
         type="color"
-        value={value && /^#[0-9a-f]{6}$/i.test(value) ? value : "#2dd4bf"}
+        value={value && /^#[0-9a-f]{6}$/i.test(value) ? value : "#e8590c"}
         onChange={(e) => onChange(e.target.value)}
         className="size-8 cursor-pointer rounded-full md:size-7"
         title="Color personalizado"
@@ -95,7 +95,7 @@ export function TagInput({ value, onChange, suggestions = [], label = "Etiquetas
     } else if (e.key === "Backspace" && !text && value.length) onChange(value.slice(0, -1));
   }
   return (
-    <div className={cn(controlClass, "flex min-h-11 flex-wrap items-center gap-1.5 py-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/40 md:min-h-10")}>
+    <div className={cn(controlClass, "flex min-h-11 flex-wrap items-center gap-1.5 py-1.5 focus-within:border-accent focus-within:ring-[3px] focus-within:ring-accent/20 md:min-h-10")}>
       {value.map((t) => (
         <Badge key={t} tone="accent" className="gap-1.5 normal-case tracking-normal">
           {t}

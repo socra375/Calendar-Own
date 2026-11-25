@@ -7,7 +7,7 @@ export function Pager({ pagination, onPage }: { pagination: Pagination | null | 
   const { page, totalPages, total } = pagination;
   return (
     <nav aria-label="Paginación" className="mt-4 flex items-center justify-between gap-3">
-      <p className="font-mono text-xs text-muted">
+      <p className="text-xs text-muted tabular-nums">
         Página {page} de {totalPages} · {total} resultados
       </p>
       <div className="flex gap-2">

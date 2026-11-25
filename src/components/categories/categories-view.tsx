@@ -87,7 +87,7 @@ function Categories() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {(q.data ?? []).map((c) => (
-            <Panel key={c.id} className="glow-hover flex items-center gap-3 p-3 md:p-3">
+            <Panel key={c.id} className="hover-lift flex items-center gap-3 p-3 md:p-3">
               <span className="grid size-11 shrink-0 place-items-center rounded-card" style={{ background: c.color, color: readableOn(c.color) }}>
                 <DynIcon name={c.icon} className="size-5" fallback="tag" />
               </span>

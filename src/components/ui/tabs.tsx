@@ -24,7 +24,7 @@ export function Tabs({ tabs, value, onChange, label, className }: { tabs: TabDef
     document.getElementById(`${base}-${tabs[n]!.id}`)?.focus();
   }
   return (
-    <div role="tablist" aria-label={label} onKeyDown={onKey} className={cn("flex gap-1 overflow-x-auto rounded-control border border-line bg-surface-2/50 p-1", className)}>
+    <div role="tablist" aria-label={label} onKeyDown={onKey} className={cn("flex gap-1 overflow-x-auto rounded-control border border-line bg-surface-2/70 p-1", className)}>
       {tabs.map((t) => {
         const active = t.id === value;
         return (
@@ -37,8 +37,8 @@ export function Tabs({ tabs, value, onChange, label, className }: { tabs: TabDef
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.id)}
             className={cn(
-              "flex h-11 shrink-0 items-center gap-2 rounded-[8px] px-3 text-[13px] font-medium transition-colors duration-150 md:h-8",
-              active ? "bg-surface text-accent shadow-sm ring-1 ring-line-strong" : "text-muted hover:text-fg",
+              "flex h-11 shrink-0 items-center gap-2 rounded-[8px] px-3 text-[13px] font-semibold transition-[color,background-color,box-shadow] duration-200 ease-[var(--ease)] md:h-8",
+              active ? "bg-surface text-fg shadow-soft ring-1 ring-line" : "text-muted hover:bg-surface/60 hover:text-fg",
             )}
           >
             {t.icon}

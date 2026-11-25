@@ -22,7 +22,7 @@ const PRIORITY_TONE = { urgent: "danger", high: "warm", medium: "neutral", low: 
 function ItemButton({ item, children, className }: { item: AgendaItem; children: React.ReactNode; className?: string }) {
   const app = useApp();
   return (
-    <button type="button" onClick={() => app.openAgendaItem(item)} className={cn("glow-hover flex min-h-11 w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left hover:bg-surface-2/60", className)}>
+    <button type="button" onClick={() => app.openAgendaItem(item)} className={cn("hover-lift flex min-h-11 w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left", className)}>
       {children}
     </button>
   );
@@ -45,14 +45,14 @@ export function Dashboard() {
   const nowIndex = nowHHMM ? agenda.findIndex((i) => !i.isAllDay && i.type === "event" && (i.localTime ?? "") > nowHHMM) : -1;
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <p className="t-label">{today ? fmtWeekday(today) : " "}</p>
+          <p className="t-label mb-2 first-letter:uppercase">{today ? fmtWeekday(today) : " "}</p>
           <h1 className="t-h1">
             {w ? greeting(w.h) : "Hola"}, {name}
           </h1>
-          <p className="mt-1 text-muted">{today ? fmtDateFull(today) : <span aria-hidden className="skeleton inline-block h-4 w-40 align-middle" />}</p>
+          <p className="mt-2 text-muted first-letter:uppercase">{today ? fmtDateFull(today) : <span aria-hidden className="skeleton inline-block h-4 w-40 align-middle" />}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={() => app.openEventForm()}>
@@ -67,12 +67,12 @@ export function Dashboard() {
         </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-12">
+      <div className="stagger grid gap-5 lg:grid-cols-12">
         {/* Agenda de hoy */}
-        <Panel reticle className="lg:col-span-7 lg:row-span-2" aria-labelledby="h-today">
-          <div className="mb-3 flex items-end justify-between">
+        <Panel featured className="lg:col-span-7 lg:row-span-2" aria-labelledby="h-today">
+          <div className="mb-4 flex items-end justify-between border-b border-line pb-3">
             <div>
-              <p className="t-label">Hoy</p>
+              <p className="t-label mb-1">Hoy</p>
               <h2 id="h-today" className="t-h2">Agenda de hoy</h2>
             </div>
             {d && <Badge tone="accent">{d.counts.eventsToday} eventos</Badge>}
@@ -86,14 +86,14 @@ export function Dashboard() {
           ) : agenda.length === 0 ? (
             <EmptyState icon={<CalendarCheck />} title="Nada en la agenda de hoy" description="Día libre. Aprovecha para planificar algo." action={<Button variant="outline" onClick={() => app.openEventForm()}>Crear evento</Button>} />
           ) : (
-            <ol className="relative space-y-1.5 border-l border-line pl-4">
+            <ol className="relative space-y-1 border-l border-line pl-4">
               {agenda.map((it, i) => (
                 <li key={`${it.type}-${it.id}-${it.occurrenceKey}`} className="relative">
                   {nowIndex === i && (
                     <div aria-label="Ahora" className="relative -mb-0.5 mb-2 flex items-center gap-2" role="separator">
-                      <span className="pulse-dot absolute -left-[21px] size-2.5 rounded-full bg-accent" />
-                      <span className="h-px flex-1 bg-accent/60" />
-                      <span className="font-mono text-[11px] text-accent">{nowHHMM}</span>
+                      <span className="pulse-dot absolute -left-[21px] size-2.5 rounded-full bg-accent-bright" />
+                      <span className="h-px flex-1 bg-accent-bright/60" />
+                      <span className="font-mono text-[11px] font-medium text-accent">{nowHHMM}</span>
                     </div>
                   )}
                   <ItemButton item={it}>
@@ -113,8 +113,8 @@ export function Dashboard() {
               ))}
               {nowIndex === -1 && nowHHMM && agenda.some((i) => !i.isAllDay && i.type === "event") && (
                 <li aria-label="Ahora" className="relative flex items-center gap-2 pt-1">
-                  <span className="pulse-dot absolute -left-[21px] size-2.5 rounded-full bg-accent" />
-                  <span className="h-px flex-1 bg-accent/60" />
+                  <span className="pulse-dot absolute -left-[21px] size-2.5 rounded-full bg-accent-bright" />
+                  <span className="h-px flex-1 bg-accent-bright/60" />
                   <span className="font-mono text-[11px] text-accent">{nowHHMM}</span>
                 </li>
               )}
@@ -141,12 +141,12 @@ export function Dashboard() {
           {!d ? (
             <Skeleton className="h-20" />
           ) : d.nextEvent ? (
-            <button type="button" onClick={() => app.openAgendaItem(d.nextEvent!)} className="glow-hover w-full rounded-card border border-line bg-surface-2/40 p-4 text-left">
+            <button type="button" onClick={() => app.openAgendaItem(d.nextEvent!)} className="hover-lift w-full rounded-card border border-line bg-surface-2/40 p-5 text-left">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <Badge tone="accent">{d.nextEvent.start ? relativeFromNow(d.nextEvent.start, now || Date.parse(d.generatedAt)) : fmtDateShort(d.nextEvent.localDate)}</Badge>
                 <span className="font-mono text-xs text-muted">{d.nextEvent.localTime ?? "Todo el día"}</span>
               </div>
-              <p className="text-lg font-semibold">{d.nextEvent.title}</p>
+              <p className="t-h2 text-[1.5rem]">{d.nextEvent.title}</p>
               <p className="mt-1 text-sm text-muted">
                 {fmtDateShort(d.nextEvent.localDate)}
                 {d.nextEvent.location ? ` · ${d.nextEvent.location}` : ""}
@@ -156,16 +156,16 @@ export function Dashboard() {
             <p className="text-sm text-muted">No hay eventos próximos.</p>
           )}
           {d && (
-            <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4">
+            <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4">
               {[
                 { l: "Eventos semana", v: d.counts.eventsThisWeek, i: <Clock className="size-3.5" /> },
                 { l: "Pendientes", v: d.tasks.pending + d.tasks.inProgress, i: <CheckCircle2 className="size-3.5" /> },
                 { l: "Vencidas", v: d.tasks.overdue, i: <Flame className="size-3.5" />, warn: d.tasks.overdue > 0 },
                 { l: "Hechas semana", v: d.tasks.completedThisWeek, i: <CheckCircle2 className="size-3.5" /> },
               ].map((m) => (
-                <div key={m.l} className="rounded-control border border-line px-3 py-2">
-                  <dt className="t-label flex items-center gap-1 truncate">{m.i}{m.l}</dt>
-                  <dd className={cn("font-mono text-2xl", m.warn && "text-danger")}>{m.v}</dd>
+                <div key={m.l} className="rounded-control border border-line bg-surface-2/40 px-3.5 py-3">
+                  <dt className="t-label flex items-center gap-1.5 truncate text-[10px]">{m.i}{m.l}</dt>
+                  <dd className={cn("t-num mt-2", m.warn && "text-danger")}>{m.v}</dd>
                 </div>
               ))}
             </dl>
@@ -174,7 +174,7 @@ export function Dashboard() {
 
         {/* Próximos eventos */}
         <Panel className="lg:col-span-5" aria-labelledby="h-up">
-          <PanelHeader label="Pronto" title="Próximos eventos" action={<Link href="/agenda" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver agenda</Link>} />
+          <PanelHeader label="Pronto" title="Próximos eventos" action={<Link href="/agenda" className="inline-flex min-h-11 items-center text-xs font-semibold text-accent underline-offset-4 hover:underline md:min-h-0">Ver agenda</Link>} />
           <span id="h-up" className="sr-only">Próximos eventos</span>
           {!d ? (
             <Skeleton className="h-24" />
@@ -199,7 +199,7 @@ export function Dashboard() {
 
         {/* Tareas */}
         <Panel className="lg:col-span-6" aria-labelledby="h-tasks">
-          <PanelHeader label="Pendiente" title="Tareas" action={<Link href="/tasks" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver todas</Link>} />
+          <PanelHeader label="Pendiente" title="Tareas" action={<Link href="/tasks" className="inline-flex min-h-11 items-center text-xs font-semibold text-accent underline-offset-4 hover:underline md:min-h-0">Ver todas</Link>} />
           <span id="h-tasks" className="sr-only">Tareas pendientes y vencidas</span>
           {!d ? (
             <Skeleton className="h-24" />
@@ -223,7 +223,7 @@ export function Dashboard() {
 
         {/* Fechas */}
         <Panel className="lg:col-span-6" aria-labelledby="h-sd">
-          <PanelHeader label="Calendario personal" title="Cumpleaños y fechas" action={<Link href="/special-dates" className="inline-flex min-h-11 items-center text-xs text-accent hover:underline md:min-h-0">Ver todas</Link>} />
+          <PanelHeader label="Calendario personal" title="Cumpleaños y fechas" action={<Link href="/special-dates" className="inline-flex min-h-11 items-center text-xs font-semibold text-accent underline-offset-4 hover:underline md:min-h-0">Ver todas</Link>} />
           <span id="h-sd" className="sr-only">Próximos cumpleaños y fechas especiales</span>
           {!d ? (
             <Skeleton className="h-24" />

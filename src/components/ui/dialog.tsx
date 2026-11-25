@@ -48,7 +48,7 @@ function DialogInner({ onClose, title, description, children, footer, size = "md
       aria-describedby={description ? descId : undefined}
       className={cn(
         "ui-dialog flex flex-col text-left",
-        variant === "sheet" ? "ui-sheet" : cn("rounded-panel shadow-hud max-md:max-h-[100dvh]", widths[size]),
+        variant === "sheet" ? "ui-sheet" : cn("rounded-panel max-md:max-h-[100dvh]", widths[size]),
       )}
       onCancel={(e) => {
         e.preventDefault();
@@ -58,7 +58,7 @@ function DialogInner({ onClose, title, description, children, footer, size = "md
         if (dismissible && e.target === ref.current) onClose();
       }}
     >
-      <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
+      <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4 md:px-6">
         <div className="min-w-0">
           <h2 id={titleId} className="t-h2 truncate">
             {title}
@@ -75,8 +75,8 @@ function DialogInner({ onClose, title, description, children, footer, size = "md
           </Button>
         )}
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-      {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface px-5 py-3">{footer}</footer>}
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">{children}</div>
+      {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2/50 px-5 py-3 md:px-6">{footer}</footer>}
     </dialog>
   );
 }

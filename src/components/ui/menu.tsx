@@ -64,8 +64,8 @@ export function Menu({
 
   const itemClass = (danger?: boolean) =>
     cn(
-      "flex min-h-11 w-full items-center gap-2.5 rounded-[8px] px-2.5 text-left text-sm transition-colors md:min-h-9",
-      danger ? "text-danger hover:bg-danger/10" : "hover:bg-surface-2 focus-visible:bg-surface-2",
+      "flex min-h-11 w-full items-center gap-2.5 rounded-[8px] px-2.5 text-left text-sm transition-colors duration-150 md:min-h-9",
+      danger ? "text-danger hover:bg-danger/10" : "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
     );
 
   return (
@@ -79,7 +79,7 @@ export function Menu({
           role="menu"
           aria-label={label}
           className={cn(
-            "absolute z-50 min-w-52 rounded-card border border-line-strong bg-surface p-1.5 shadow-hud",
+            "absolute z-50 min-w-52 rounded-card border border-line bg-surface p-1.5 shadow-[var(--sh-pop)] [animation:rise-in_0.16s_var(--ease)]",
             side === "up" ? "bottom-full mb-2" : "mt-2",
             align === "right" ? "right-0" : "left-0",
           )}

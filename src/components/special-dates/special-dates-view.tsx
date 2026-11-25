@@ -113,7 +113,7 @@ export function SpecialDatesView() {
                   <div className="shrink-0 text-right">
                     {s.daysUntil !== null ? (
                       <>
-                        <p className={cn("font-mono text-lg leading-none", s.daysUntil <= 7 ? "text-accent" : "text-fg")}>{s.daysUntil === 0 ? "Hoy" : s.daysUntil}</p>
+                        <p className={cn("t-num text-[1.625rem]", s.daysUntil <= 7 ? "text-accent" : "text-fg")}>{s.daysUntil === 0 ? "Hoy" : s.daysUntil}</p>
                         <p className="t-label">{s.daysUntil === 0 ? "es hoy" : s.daysUntil === 1 ? "día" : "días"}</p>
                       </>
                     ) : (

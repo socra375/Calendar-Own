@@ -27,7 +27,7 @@ export async function launch(viewport = { width: 1280, height: 800 }, colorSchem
 export async function login(page) {
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Correo").fill(EMAIL);
-  await page.getByLabel("Contraseña").fill(PASSWORD);
+  await page.getByLabel("Contraseña", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Entrar" }).click();
   await page.waitForURL("**/dashboard");
 }

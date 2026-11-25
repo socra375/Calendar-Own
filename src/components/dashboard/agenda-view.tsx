@@ -63,11 +63,11 @@ export function AgendaView() {
             .filter((day) => day.items.length)
             .map((day) => (
               <Panel key={day.localDate} aria-label={fmtDateLong(day.localDate)}>
-                <h2 className="t-label mb-2">{fmtDateLong(day.localDate)}</h2>
+                <h2 className="t-h2 mb-3 border-b border-line pb-2 first-letter:uppercase">{fmtDateLong(day.localDate)}</h2>
                 <ul className="space-y-1">
                   {day.items.map((it) => (
                     <li key={`${it.type}-${it.id}-${it.occurrenceKey}`}>
-                      <button type="button" onClick={() => app.openAgendaItem(it)} className="glow-hover flex min-h-11 w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left hover:bg-surface-2/60">
+                      <button type="button" onClick={() => app.openAgendaItem(it)} className="hover-lift flex min-h-11 w-full items-center gap-3 rounded-control border border-transparent px-2.5 py-2 text-left">
                         <span className="w-24 shrink-0 font-mono text-xs text-muted">{it.isAllDay || !it.localTime ? (it.type === "special_date" ? "fecha" : "todo el día") : `${it.localTime}${it.endLocalTime ? `–${it.endLocalTime}` : ""}`}</span>
                         <span className="h-8 w-1 shrink-0 rounded-full" style={{ background: it.color ?? (it.type === "task" ? "var(--warm)" : "var(--accent)") }} aria-hidden />
                         <span className="min-w-0 flex-1">

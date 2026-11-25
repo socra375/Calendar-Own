@@ -2,7 +2,6 @@
 
 import { Activity, Bell, Check, Clock, Copy, ExternalLink, KeyRound, Mail, Palette, Plus, RotateCw, Send, ShieldOff, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useMemo, useState, type ReactNode } from "react";
 import { useApp } from "@/components/layout/app-context";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Switch } from "@/components/ui/field";
 import { DatePicker } from "@/components/ui/pickers";
 import { ErrorState, PageHeader, Panel, Skeleton } from "@/components/ui/panel";
+import { ThemeSwitch } from "@/components/ui/theme-switch";
 import { useToast } from "@/components/ui/toast";
 import { ApiClientError, apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
@@ -18,7 +18,6 @@ import { fmtDateTime, minutesLabel, zonedToIso } from "@/lib/datetime";
 import type { HealthDto, SettingsDto, TokenDto } from "@/lib/types";
 import { errMsg, useApiQuery } from "@/lib/use-api";
 import { useNow } from "@/lib/use-now";
-import { useMounted } from "@/lib/use-pref";
 import { settingsUpdateBody } from "@/lib/validation/settings";
 
 const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -28,10 +27,10 @@ function Section({ id, icon, title, description, children }: { id: string; icon:
   return (
     <Panel aria-labelledby={id} className="space-y-4">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-control border border-line bg-surface-2 text-accent [&>svg]:size-4">{icon}</span>
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full border border-line bg-surface-2 text-accent [&>svg]:size-4">{icon}</span>
         <div>
-          <h2 id={id} className="text-base font-semibold">{title}</h2>
-          {description && <p className="text-sm text-muted">{description}</p>}
+          <h2 id={id} className="t-h2">{title}</h2>
+          {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
         </div>
       </div>
       {children}
@@ -102,38 +101,12 @@ function SettingsBody({ s }: { s: SettingsDto }) {
 }
 
 function Appearance({ s }: { s: SettingsDto }) {
-  const { theme, setTheme } = useTheme();
-  const mounted = useMounted();
   const { save, saving } = useSave();
   const [displayName, setDisplayName] = useState(s.displayName ?? "");
   const [weekStartsOn, setWeek] = useState(s.weekStartsOn);
-  const opts = [
-    { id: "light", label: "Claro" },
-    { id: "dark", label: "Oscuro" },
-    { id: "system", label: "Sistema" },
-  ] as const;
   return (
     <Section id="s-appearance" icon={<Palette />} title="Apariencia" description="Tema, nombre y primer día de la semana.">
-      <div role="radiogroup" aria-label="Tema" className="grid grid-cols-3 gap-2">
-        {opts.map((o) => {
-          const on = mounted && theme === o.id;
-          return (
-            <button
-              key={o.id}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => {
-                setTheme(o.id);
-                void save("theme", { theme: o.id }, "Tema guardado");
-              }}
-              className={cn("h-11 rounded-control border text-sm transition-colors md:h-10", on ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:border-line-strong hover:text-fg")}
-            >
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
+      <ThemeSwitch labeled onSelect={(t) => void save("theme", { theme: t }, "Tema guardado")} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Nombre para mostrar">{(p) => <Input {...p} maxLength={100} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />}</Field>
         <Field label="La semana empieza el">

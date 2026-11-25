@@ -1,22 +1,47 @@
 # Personal Calendar — Diseño de interfaz (contrato para el agente de UI)
 
-## Briefing (Arquitecto UX · Color/Tipografía · Interacciones)
-Dirección: **"HUD sobrio"**. Superficies neutras de grafito (no azules), un solo acento teal-cian usado con disciplina (foco, hoy, hora actual, estados activos) y un acento cálido ámbar para tareas/avisos. Los detalles JARVIS son *micro*: etiquetas en mono con tracking, esquinas con marcas de retícula en paneles destacados, línea de "ahora" con pulso sutil, bordes de 1px con brillo en hover. Nada de neón saturado ni degradados azules grandes. Dark mode por defecto, light mode de primera clase.
+## Dirección: editorial, cálida y sobria
+Identidad editorial premium: tema **claro por defecto** (crema + superficies blancas), acento **naranja** y tipografía serif para titulares. Jerarquía tipográfica clara, mucho aire, reglas de 1px (hairlines), etiquetas pequeñas en mayúsculas con tracking, radios moderados y sombras muy sutiles y cálidas. Sin azules fríos, sin glow ni degradados. Los colores de categoría/evento los define el usuario; el texto sobre ellos se calcula por contraste (`readableOn`, WCAG ≥4.5).
 
-Adaptaciones frente a la guía genérica de landing pages: no se usan imágenes de Unsplash ni placeholders (es una app de productividad con datos reales; `source.unsplash.com` además está discontinuado). El "assets" de esta app son iconos (lucide) y la propia data.
+## Marca
+Logo en `public/brand/logo-square-512.png` (fondo oscuro opaco), usado siempre como **tile** (`components/ui/brand.tsx`, `BrandMark`): contenedor `rounded-[22%]`, `overflow-hidden`, sombra cálida y `next/image` 512 px. Tamaños: 40px en sidebar/topbar, 40–48px en la cabecera móvil de login, 64px en el panel de login. Favicon/apple-touch: `src/app/icon.png` y `src/app/apple-icon.png`.
 
-## Design tokens (Tailwind v4, `@theme` + variables CSS en `src/app/globals.css`)
-Dark (`:root.dark`, default): bg `#0B0D0E`, surface `#121516`, surface-2 `#181C1D`, border `#252A2C`, border-strong `#343B3E`, text `#E8ECEC`, text-muted `#8A9496`, accent `#2DD4BF`, accent-ink `#042F2A`, warm `#F5B84B`, danger `#F26D6D`, success `#6EE7A8`.
-Light (`:root`): bg `#F6F6F3`, surface `#FFFFFF`, surface-2 `#EFEFEB`, border `#E1E1DB`, border-strong `#CFCFC7`, text `#141717`, text-muted `#5E6866`, accent `#0F9488`, accent-ink `#FFFFFF`, warm `#B7791F`, danger `#C93C3C`, success `#1F8F5B`.
-Radios: 10px controles, 14px tarjetas, 20px paneles. Sombras: sutiles, coloreadas con el acento al 8–12% (`0 8px 30px -12px color-mix(in oklab, var(--accent) 25%, transparent)`). Glass solo en topbar/sheets (`backdrop-blur`).
-Tipografía: Geist Sans (ya instalada, `geist`), Geist Mono para etiquetas/horas/ids. Escala fluida con `clamp()`: h1 `clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem)`, h2 `clamp(1.125rem, 1rem + .6vw, 1.5rem)`, cuerpo 14–15px, etiquetas mono 11px uppercase tracking .08em.
-Movimiento: 150–200ms `cubic-bezier(.2,.8,.2,1)`, respetar `prefers-reduced-motion`. Todo elemento interactivo: `:hover` y `:focus-visible` (anillo 2px acento + offset), `aria-label`/roles correctos, objetivos táctiles ≥44px en móvil.
-Colores de categoría/evento: el usuario los define; el texto sobre ellos se calcula por contraste (WCAG ≥4.5).
+## Tokens (`src/app/globals.css`, variables CSS + `@theme inline` de Tailwind v4)
+| Token | Claro (`:root`) | Oscuro (`:root.dark`) |
+|---|---|---|
+| bg | `#FAF6EE` | `#161412` |
+| surface | `#FFFFFF` | `#1D1A17` |
+| surface-2 | `#F3EDE1` | `#24201C` |
+| line / line-strong | `#E8DFD0` / `#D6CAB6` | `#322D27` / `#4A443B` |
+| fg | `#1F1A17` | `#F4ECDF` |
+| muted | `#6B5F55` | `#A9A094` |
+| accent (texto, enlaces, botones) | `#BE3F0A` (hover `#A63607`) | `#F59F5B` (hover `#FFB06F`) |
+| accent-ink (texto sobre accent) | `#FFFFFF` | `#1F1208` |
+| accent-bright (solo decorativo) | `#F26A1B` | `#FFA94D` |
+| accent-soft | accent-bright al 10% | accent-bright al 12% |
+| warm / danger / success | `#8F5A00` / `#B42318` / `#2B7A4B` | `#F0B35A` / `#F28B82` / `#7FD1A0` |
+
+Contraste medido (WCAG): claro fg/bg 15.99, muted/bg 5.74, accent/bg 4.99, accent/surface 5.38, blanco/accent (botón) 5.38, danger/surface 6.57; oscuro fg/bg 15.67, muted/bg 7.12, accent/bg 8.74, accent-ink/accent (botón) 8.70. `accent-bright` no se usa para texto.
+Radios: 10px controles, 14px tarjetas, 18px paneles destacados. Sombras: `--sh-soft` y `--sh-pop` (cálidas, muy suaves).
+
+## Tipografía (`next/font/google` en `layout.tsx`)
+- **DM Serif Display** (`font-serif`): h1/h2, saludo, nombre de app, números grandes (`.t-display`, `.t-h1`, `.t-h2`, `.t-num`).
+- **Manrope** (`font-sans`): texto y UI. **DM Mono** (`font-mono`): solo horas, ids y valores técnicos.
+- `.t-label`: 11px, mayúsculas, tracking .12em, peso 600. Escala fluida con `clamp()` (h1 `clamp(1.875rem, 1.4rem + 1.9vw, 2.875rem)`).
+
+## Tema
+`next-themes` (`attribute="class"`, `defaultTheme="light"`, `enableSystem`, clave `theme` en localStorage; sin parpadeo gracias al script previo a la hidratación). `ThemeSwitch` (`components/ui/theme-switch.tsx`): radiogroup de 3 segmentos Claro / Oscuro / Sistema (aria-labels "Tema claro/oscuro/del sistema", flechas de teclado). Aparece en la topbar (escritorio; en móvil es un menú de un botón), en la esquina del login y, con etiquetas, en Ajustes. En la app se persiste además vía `PATCH /api/v1/settings {theme}` (API sin cambios). La transición de colores al cambiar de tema usa la clase temporal `.theme-anim`.
+
+## Movimiento
+150–250ms, `cubic-bezier(.2,.8,.2,1)`. Hover y `:focus-visible` (anillo 2px acento + offset; inputs con anillo suave de 3px) en todo lo interactivo. Entrada de página (`#main > *`, fade + 8px), paneles con `.stagger`, diálogos/sheets/toasts/menús con fade+translate cortos, skeletons con shimmer. `prefers-reduced-motion` anula animaciones y transiciones.
+
+## Login y recuperación (`src/app/(auth)`)
+`AuthShell` en escritorio (≥1024px) dos columnas: izquierda panel editorial (logo + nombre en serif, titular "Ordena tu tiempo, con calma.", rejilla mensual SVG con dos fechas en naranja y animación de trazo/aparición); derecha formulario centrado (`AuthCard`: eyebrow, h1 serif, campos con error bajo cada uno, `PasswordInput`, botón naranja a ancho completo con estado de carga, enlace de recuperación, banner `role="alert" aria-live="assertive"`). Selector de tema en la esquina. En móvil/tablet una columna: el panel se reduce a cabecera compacta (logo, nombre, titular y tira semanal SVG). Mismo marco para `/forgot-password` y `/reset-password`.
 
 ## Layout
-- Desktop: sidebar fija 248px (colapsable a iconos 72px) + topbar con búsqueda global (`⌘K`), botón "Nuevo" (evento/tarea), campana con contador de no leídas, toggle de tema. Contenido en grid; dashboard tipo **bento asimétrico**.
-- Móvil (<768px): sidebar → bottom tab bar (Inicio, Calendario, Agenda, Tareas, Más) + FAB "+", sheets a pantalla completa para formularios, FullCalendar en `listWeek`/`timeGridDay` por defecto, toolbar compacta.
-- Dashboard (sin sobrecargar): saludo + fecha en grande, panel "Agenda de hoy" (línea de tiempo con "ahora"), "Próximos eventos", "Tareas pendientes/vencidas", "Próximos cumpleaños y fechas", mini resumen semanal (3–4 métricas), accesos rápidos.
+- Desktop: sidebar 248px (colapsable a 72px, solo tile) + topbar con búsqueda (`⌘K`), "Nuevo", campana, selector de tema y menú de usuario. Contenido centrado (máx. 1440px). Dashboard tipo bento sobrio con saludo en serif y números grandes en serif.
+- Móvil (<768px): bottom tab bar (Inicio, Calendario, Agenda, Tareas, Más) + FAB "+", sheets a pantalla completa, FullCalendar en `listWeek` por defecto, objetivos táctiles ≥44px.
+- Componentes base en `src/components/ui` (Button, Badge, Field/Input/Select/Switch, Panel/PageHeader/EmptyState/ErrorState/Skeleton, Tabs, Menu, Dialog/Sheet/ConfirmDialog, Toast, pickers, ThemeSwitch, BrandMark): no duplicar estilos fuera de ellos y de `globals.css` (incluye el restyling de FullCalendar: hoy en naranja suave, línea de "ahora" 1px, eventos con color del usuario).
 
 ## Pantallas (todas conectadas a /api/v1 reales; sin botones muertos)
 dashboard · calendar (FullCalendar dayGrid/timeGrid/list + drag/resize→PATCH, selección de rango→crear, filtro por categoría, búsqueda, vista Agenda) · agenda · tasks · special-dates · categories (+ tags) · notifications (bandeja + estado de entregas) · history (audit logs con filtros fecha/acción/recurso/actor) · settings (apariencia, zona horaria, categorías, recordatorios por defecto, Telegram, email, tokens de Eddie con crear/rotar/revocar y mostrar-una-vez, estado de API/health, enlace a /docs).

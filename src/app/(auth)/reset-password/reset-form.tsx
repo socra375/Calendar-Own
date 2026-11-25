@@ -9,7 +9,7 @@ import { Field, Input } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ApiClientError, apiFetch } from "@/lib/api-client";
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/validation/auth";
-import { AuthCard } from "../auth-card";
+import { AuthAlert, AuthCard } from "../auth-card";
 
 type TokenState = { status: "reading" } | { status: "missing" } | { status: "ready"; token: string } | { status: "invalid" };
 
@@ -20,6 +20,7 @@ export function ResetPasswordForm() {
   const [confirm, setConfirm] = useState("");
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fe, setFe] = useState<{ password?: string; confirm?: string }>({});
   const [loading, setLoading] = useState(false);
   const read = useRef(false);
 
@@ -36,11 +37,12 @@ export function ResetPasswordForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (state.status !== "ready") return;
-    if (password.length < PASSWORD_MIN_LENGTH) return setError(`La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres.`);
-    if (password.length > PASSWORD_MAX_LENGTH) return setError(`La contraseña no puede superar ${PASSWORD_MAX_LENGTH} caracteres.`);
-    if (password !== confirm) return setError("Las contraseñas no coinciden.");
-    setLoading(true);
     setError(null);
+    if (password.length < PASSWORD_MIN_LENGTH) return setFe({ password: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres.` });
+    if (password.length > PASSWORD_MAX_LENGTH) return setFe({ password: `La contraseña no puede superar ${PASSWORD_MAX_LENGTH} caracteres.` });
+    if (password !== confirm) return setFe({ confirm: "Las contraseñas no coinciden." });
+    setFe({});
+    setLoading(true);
     try {
       await apiFetch("/api/auth/reset-password", { method: "POST", body: { token: state.token, password } });
       router.replace("/login?reset=1");
@@ -56,7 +58,7 @@ export function ResetPasswordForm() {
 
   if (state.status === "reading") {
     return (
-      <AuthCard title="Nueva contraseña">
+      <AuthCard title="Nueva contraseña" eyebrow="Recuperación">
         <p role="status" className="text-sm text-muted">
           Comprobando enlace…
         </p>
@@ -66,8 +68,8 @@ export function ResetPasswordForm() {
 
   if (state.status === "missing" || state.status === "invalid") {
     return (
-      <AuthCard title="Enlace no válido">
-        <div role="alert" className="flex gap-3 rounded-control border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+      <AuthCard title="Enlace no válido" eyebrow="Recuperación">
+        <div role="alert" className="flex gap-3 rounded-control border border-danger/30 bg-danger/10 px-3.5 py-3 text-sm text-danger">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             {state.status === "missing"
@@ -78,7 +80,7 @@ export function ResetPasswordForm() {
         <Link href="/forgot-password" className={buttonClass("primary", "md", "w-full justify-center")}>
           Solicitar un enlace nuevo
         </Link>
-        <Link href="/login" className="inline-flex min-h-11 items-center text-sm text-muted underline-offset-4 transition-colors duration-150 hover:text-fg hover:underline">
+        <Link href="/login" className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 transition-colors duration-200 hover:text-fg hover:underline">
           Volver a iniciar sesión
         </Link>
       </AuthCard>
@@ -86,8 +88,8 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <AuthCard title="Nueva contraseña" subtitle={`Elige una contraseña de al menos ${PASSWORD_MIN_LENGTH} caracteres`} onSubmit={onSubmit}>
-      <Field label="Nueva contraseña" hint={`Entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres`}>
+    <AuthCard title="Nueva contraseña" eyebrow="Recuperación" subtitle={`Elige una contraseña de al menos ${PASSWORD_MIN_LENGTH} caracteres.`} onSubmit={onSubmit}>
+      <Field label="Nueva contraseña" hint={`Entre ${PASSWORD_MIN_LENGTH} y ${PASSWORD_MAX_LENGTH} caracteres`} error={fe.password}>
         {(p) => (
           <PasswordInput
             {...p}
@@ -103,7 +105,7 @@ export function ResetPasswordForm() {
           />
         )}
       </Field>
-      <Field label="Confirmar contraseña">
+      <Field label="Confirmar contraseña" error={fe.confirm}>
         {(p) => (
           <Input
             {...p}
@@ -116,11 +118,7 @@ export function ResetPasswordForm() {
           />
         )}
       </Field>
-      {error && (
-        <p role="alert" className="rounded-control border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
-          {error}
-        </p>
-      )}
+      {error && <AuthAlert>{error}</AuthAlert>}
       <Button type="submit" variant="primary" loading={loading} className="w-full justify-center">
         {loading ? "Guardando…" : "Cambiar contraseña"}
       </Button>

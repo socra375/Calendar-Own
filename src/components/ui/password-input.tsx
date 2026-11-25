@@ -20,7 +20,7 @@ export function PasswordInput({
         onClick={onToggle}
         aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
         aria-pressed={visible}
-        className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-control text-muted transition-colors duration-150 hover:text-fg"
+        className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-control text-muted transition-colors duration-150 hover:text-fg focus-visible:text-fg"
       >
         {visible ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
       </button>
